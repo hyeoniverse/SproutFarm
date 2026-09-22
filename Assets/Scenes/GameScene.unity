@@ -41875,6 +41875,95 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &2100000071
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2100000072}
+  - component: {fileID: 2100000073}
+  m_Layer: 0
+  m_Name: WildTerrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2100000072
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000071}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2020372420}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2100000073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a517d605f101abe372ff5bc68e774bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  chunkSize: 20
+  viewChunks: 1
+  seed: 20260923
+  homeArea:
+    serializedVersion: 2
+    m_XMin: -22
+    m_YMin: -22
+    m_Width: 44
+    m_Height: 44
+  trees:
+  - {fileID: 11400000, guid: c4b64a01909afa54798faaa57481c04d, type: 2}
+  - {fileID: 11400000, guid: e43d2097606caed4d85de61a2c60a5cc, type: 2}
+  - {fileID: 11400000, guid: d4d3a695234e2c04995b5cdc262a255e, type: 2}
+  mushrooms:
+  - {fileID: 11400000, guid: 542e6a6fc99673d45a16941a3d60d6b5, type: 2}
+  - {fileID: 11400000, guid: 8d4f0b9e3890b9745b59bece75fdb1cb, type: 2}
+  - {fileID: 11400000, guid: 7c86f86076cf9894398390151f5267d8, type: 2}
+  - {fileID: 11400000, guid: 7f78ddde46ee31d489eec655d2e7e08d, type: 2}
+  rocks:
+  - {fileID: 11400000, guid: 63c2b9a56c2f7c6439eb3cd7b2e466f6, type: 2}
+  - {fileID: 11400000, guid: d05288d6bac87384fbb2606663042677, type: 2}
+  stumps:
+  - {fileID: 11400000, guid: 13d6e7a0eb545a14186c51c8840ca98d, type: 2}
+  - {fileID: 11400000, guid: 8093707b51022cf469531b18492b22d1, type: 2}
+  - {fileID: 11400000, guid: 3f676d8fd4c0b1e4b8a8ca7444ddf5d7, type: 2}
+  bushes:
+  - {fileID: 11400000, guid: 6fb8ac2e233cfde45be740d75656343c, type: 2}
+  - {fileID: 11400000, guid: d7ee104e060ed3d499f72863fbbadc3b, type: 2}
+  - {fileID: 11400000, guid: 7cb0d1ab61e637f45a6fe01d9907fac5, type: 2}
+  - {fileID: 11400000, guid: 195f75fff46cf8c45b71779a2cab7e40, type: 2}
+  flowers:
+  - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
+  - {fileID: 11400000, guid: 7cd033f47963464438ad95b819a8f72b, type: 2}
+  - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
+  - {fileID: 11400000, guid: 38af2e20ada257d4b8a370c6bfacf6d7, type: 2}
+  - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
+  - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
+  - {fileID: 11400000, guid: c60512acf2f80cb428beb1d406bbec62, type: 2}
+  sunflower: {fileID: 11400000, guid: f5c12cc7e1fe22d42b77e1396ff194bb, type: 2}
+  dirt: {fileID: 11400000, guid: 38e62a4fe0dc3074fa8e889af8a7cc8a, type: 2}
+  rendererTemplate: {fileID: 175265753}
+  groundOrder: -9
+  flowerOrder: 3
+  objectOrder: 7
 --- !u!1 &2100000061
 GameObject:
   m_ObjectHideFlags: 0
@@ -71164,6 +71253,7 @@ Transform:
   - {fileID: 240456997}
   - {fileID: 1975585774}
   - {fileID: 175265751}
+  - {fileID: 2100000072}
   - {fileID: 287989823}
   m_Father: {fileID: 1610360582}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
