@@ -7,6 +7,9 @@ public class ClearSceneManager : MonoBehaviour
     // 게임 오버와 게임 클리어 UI 요소에 대한 참조
     public GameObject gameOverScene;
     public GameObject gameClearScene;
+    // 배경 타일맵은 캔버스 밖(월드)에 있어야 해상도와 상관없이 카메라 앞에 그려지므로 따로 켜고 끈다
+    public GameObject gameOverBackground;
+    public GameObject gameClearBackground;
 
     private void Start()
     {
@@ -18,11 +21,15 @@ public class ClearSceneManager : MonoBehaviour
         {
             gameClearScene.SetActive(true); // 게임 클리어 UI 활성화
             gameOverScene.SetActive(false); // 게임 오버 UI 비활성화
+            gameClearBackground.SetActive(true);
+            gameOverBackground.SetActive(false);
         }
         else
         {
             gameClearScene.SetActive(false); // 게임 클리어 UI 비활성화
             gameOverScene.SetActive(true); // 게임 오버 UI 활성화
+            gameClearBackground.SetActive(false);
+            gameOverBackground.SetActive(true);
         }
     }
 

@@ -385,7 +385,7 @@ public class Player : MonoBehaviour
         RectTransform arrowRectTransform = arrowSpriteImage.GetComponent<RectTransform>();
         if (arrowRectTransform != null)
         {
-            arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 90); // 화살표가 위를 향하도록 -90도 조정
+            arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 135); // 고양이 발 아이콘은 왼쪽 위(135도)를 가리키므로 그만큼 빼서 맞춤
         }
     }
 
