@@ -16,18 +16,15 @@
         height="720"
         tabindex="-1"
       ></canvas>
-      <div id="unity-loading-bar">
+      <div id="unity-loading-bar" class="waiting">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
-      </div>
-      <div id="unity-warning"></div>
-      <div id="start-screen">
-        <p id="start-title">Sprout Farm</p>
         <button id="start-button" type="button" autofocus>START</button>
         <p id="start-hint">클릭하면 게임을 불러와요 · 소리가 함께 재생돼요</p>
       </div>
+      <div id="unity-warning"></div>
     </div>
     <script>
       window.addEventListener("load", function () {
@@ -41,8 +38,8 @@
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var warningBanner = document.querySelector("#unity-warning");
-      var startScreen = document.querySelector("#start-screen");
       var startButton = document.querySelector("#start-button");
+      var startHint = document.querySelector("#start-hint");
 
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
@@ -131,11 +128,15 @@
         document.getElementsByTagName("head")[0].appendChild(meta);
       }
 
+      // The loading screen shows START in place of the progress bar until clicked.
+      loadingBar.style.display = "block";
+
       function startGame() {
         unlockAudio();
-        startScreen.remove();
+        startButton.remove();
+        startHint.remove();
+        loadingBar.classList.remove("waiting");
         config.devicePixelRatio = renderPixelRatio();
-        loadingBar.style.display = "block";
 
         var script = document.createElement("script");
         script.src = loaderUrl;
