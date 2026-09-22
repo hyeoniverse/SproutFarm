@@ -5949,7 +5949,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 7
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 1, y: 1, z: 0}
   m_MaxChunkCount: 16
@@ -8017,7 +8017,7 @@ Transform:
   m_GameObject: {fileID: 551131969}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10, y: 10, z: 0}
+  m_LocalPosition: {x: 10, y: 10.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11624,7 +11624,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 20, y: 20, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -17905,7 +17905,7 @@ Transform:
   m_GameObject: {fileID: 693804491}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: 10, z: 0}
+  m_LocalPosition: {x: -10, y: 10.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21442,7 +21442,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 20, y: 20, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -41945,7 +41945,71 @@ MonoBehaviour:
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
   - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
   - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
+  pondWater: {fileID: 11400000, guid: f5c7994213cce4378b45b88c734896dd, type: 2}
+  lilyPads:
+  - {fileID: 11400000, guid: 6193d896059d2a54ab703997fcc1c7de, type: 2}
+  - {fileID: 11400000, guid: 13c13a534da1da347b120a2d1df993c6, type: 2}
+  shoreSprites:
+  - {fileID: 1987674287, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 619325759, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 861260624, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 2052935261, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1115008624, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1253170996, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1436725010, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -2072947023, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -2041504846, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 362626256, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -683391188, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 2066309746, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1542675869, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1046625823, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -960665264, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 353471645, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1059179400, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -882937112, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1299566171, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1934556566, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1865698063, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1087714401, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1931295776, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1675428145, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -878123395, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 718567855, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1581337772, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -697698336, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -416493010, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -292943625, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1921761731, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 981763780, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1297137894, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1496030301, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 992321419, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -600470408, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1545614460, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 480732718, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 2056283047, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 850499049, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -803847721, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1908767954, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 287877095, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 46322731, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1775612462, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1248195884, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -1603089879, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 932949394, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 658391732, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 9280959, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: 1284171188, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  - {fileID: -3052925, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  groundDecor:
+  - {fileID: 551131975}
+  - {fileID: 693804497}
+  - {fileID: 1995019677}
+  - {fileID: 1778504142}
   rendererTemplate: {fileID: 175265753}
+  pondOrder: -9
+  pondDecorOrder: -8
   flowerOrder: 3
   objectOrder: 7
   baseGrassOrder: 8
@@ -42007,6 +42071,8 @@ MonoBehaviour:
   - {fileID: 171668075}
   - {fileID: 1749784636}
   - {fileID: 2100000044}
+  - {fileID: 240457000}
+  - {fileID: 1975585777}
   tiles:
   - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
@@ -54327,7 +54393,7 @@ Transform:
   m_GameObject: {fileID: 1778504136}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10, y: -10, z: 0}
+  m_LocalPosition: {x: 10, y: -9.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -58484,7 +58550,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -12, y: -10, z: 0}
   m_Size: {x: 22, y: 24, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -65152,7 +65218,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 7
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0.5, y: 0.5, z: 0}
   m_MaxChunkCount: 16
@@ -65391,7 +65457,7 @@ Transform:
   m_GameObject: {fileID: 1995019671}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: -10, z: 0}
+  m_LocalPosition: {x: -10, y: -9.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -69550,7 +69616,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 26, y: 23, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1

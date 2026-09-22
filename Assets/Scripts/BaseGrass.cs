@@ -34,6 +34,10 @@ public class BaseGrass : MonoBehaviour
                     continue;
 
                 ClearGrass(fence.GetCellCenterWorld(cell));
+                // 세로로 이어진 울타리는 맨 아래 칸이 밑둥이다. 위 칸에 풀을 두면 가로대 위에 풀이 올라와 보인다.
+                if (fence.GetTile(cell + Vector3Int.down) == fenceTile)
+                    continue;
+
                 PutBaseGrass(baseGrass, fence, cell);
             }
         }
@@ -43,7 +47,8 @@ public class BaseGrass : MonoBehaviour
             Tilemap tall = tallRenderer.GetComponent<Tilemap>();
             foreach (Vector3Int cell in tall.cellBounds.allPositionsWithin)
             {
-                if (tall.GetSprite(cell) != null)
+                // 두 칸 이상을 차지하는 나무는 맨 아래 칸만 밑둥이다
+                if (tall.GetSprite(cell) != null && tall.GetSprite(cell + Vector3Int.down) == null)
                 {
                     PutBaseGrass(baseGrass, tall, cell);
                 }
