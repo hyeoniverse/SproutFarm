@@ -50,7 +50,7 @@ public class House : MonoBehaviour
     private void Start()
     {
         player = GameManager.instance.player;
-        playerStatus = FindObjectOfType<PlayerStatus>();
+        playerStatus = FindAnyObjectByType<PlayerStatus>();
         CreateSleepOverlay();
     }
 

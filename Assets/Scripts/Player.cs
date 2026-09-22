@@ -77,7 +77,7 @@ public class Player : MonoBehaviour
 
         // PlayerStatus 참조 초기화
         playerStatus = FindObjectOfType<PlayerStatus>();
-        house = FindObjectOfType<House>();
+        house = FindAnyObjectByType<House>();
     }
 
     // 매 프레임 호출되는 업데이트 메서드

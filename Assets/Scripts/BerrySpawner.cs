@@ -28,8 +28,8 @@ public class BerrySpawner : MonoBehaviour
     private void Start()
     {
         player = GameManager.instance.player;
-        playerStatus = FindObjectOfType<PlayerStatus>();
-        house = FindObjectOfType<House>();
+        playerStatus = FindAnyObjectByType<PlayerStatus>();
+        house = FindAnyObjectByType<House>();
         eatAudioSource = gameObject.AddComponent<AudioSource>();
         solidOnly.useTriggers = false;
 
