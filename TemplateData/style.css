@@ -7,8 +7,12 @@ body { padding: 0; margin: 0 }
 #unity-progress-bar-full { width: 0%; height: 18px; margin-top: 10px; background: url('progress-bar-full-dark.png') no-repeat center }
 #unity-warning { position: absolute; left: 50%; top: 5%; transform: translate(-50%); background: white; padding: 10px; display: none }
 #unity-loading-bar.waiting #unity-progress-bar-empty { visibility: hidden }
-#start-button { position: absolute; left: 50%; top: 142px; transform: translateX(-50%); padding: 10px 36px; font: 700 18px/1 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; letter-spacing: 4px; color: #231F20; background: #F4E9A8; border: 0; border-radius: 6px; box-shadow: 0 4px 0 #9C8FD0; cursor: pointer }
-#start-button:hover { background: #FFF4BF }
-#start-button:active { transform: translate(-50%, 4px); box-shadow: none }
-#start-button:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 4px }
-#start-hint { position: absolute; left: 50%; top: 204px; transform: translateX(-50%); margin: 0; white-space: nowrap; font: 13px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #BDB7B8 }
+#start-button { position: absolute; left: 50%; top: 142px; transform: translateX(-50%); width: 288px; height: 96px; padding: 0; border: 0; background: url('start-button.png') 0 0 / 576px 96px no-repeat; image-rendering: pixelated; cursor: pointer }
+#start-button:hover { filter: brightness(1.05) }
+#start-button:active { background-position: -288px 0 }
+#start-button:focus-visible { outline: 3px solid #FFFFFF; outline-offset: -4px }
+#start-character { position: absolute; left: calc(50% - 240px); top: 130px; width: 144px; height: 144px; background: url('start-character.png') 0 0 / 288px 144px no-repeat; image-rendering: pixelated; animation: start-character-dig 0.8s steps(2) infinite }
+#unity-loading-bar:not(.waiting) #start-character { left: calc(50% - 180px); top: 62px }
+@keyframes start-character-dig { to { background-position: -288px 0 } }
+@media (prefers-reduced-motion: reduce) { #start-character { animation: none } }
+#start-hint { position: absolute; left: 50%; top: 250px; transform: translateX(-50%); margin: 0; white-space: nowrap; font: 13px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #BDB7B8 }

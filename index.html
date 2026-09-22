@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Sprout Farm</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
-    <link rel="stylesheet" href="TemplateData/style.css" />
+    <link rel="stylesheet" href="TemplateData/style.css?v=2" />
     <link rel="manifest" href="manifest.webmanifest" />
   </head>
   <body>
@@ -21,7 +21,8 @@
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
-        <button id="start-button" type="button" autofocus>START</button>
+        <div id="start-character" aria-hidden="true"></div>
+        <button id="start-button" type="button" aria-label="START" autofocus></button>
         <p id="start-hint">클릭하면 게임을 불러와요 · 소리가 함께 재생돼요</p>
       </div>
       <div id="unity-warning"></div>
@@ -89,23 +90,6 @@
       // the canvas DOM size and WebGL render target sizes yourself.
       // config.matchWebGLToCanvasSize = false;
 
-      // Browsers keep audio suspended until the user interacts with the page.
-      // Create the AudioContext inside the START click and hand it to Unity,
-      // so the game's sound plays as soon as it loads (Safari included).
-      function unlockAudio() {
-        var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!NativeAudioContext) return;
-        var unlocked = new NativeAudioContext();
-        unlocked.resume();
-        window.AudioContext = function (options) {
-          if (!unlocked) return new NativeAudioContext(options);
-          var audioContext = unlocked;
-          unlocked = null;
-          return audioContext;
-        };
-        window.AudioContext.prototype = NativeAudioContext.prototype;
-      }
-
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         // Mobile device style: fill the whole browser client area with the game canvas:
         var meta = document.createElement("meta");
@@ -116,10 +100,11 @@
       }
 
       // The loading screen shows START in place of the progress bar until clicked.
+      // Loading only after that click means the page already has a user gesture
+      // when Unity creates its AudioContext, so the game's sound can play.
       loadingBar.style.display = "block";
 
       function startGame() {
-        unlockAudio();
         startButton.remove();
         startHint.remove();
         loadingBar.classList.remove("waiting");
