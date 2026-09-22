@@ -42,7 +42,6 @@ public class Animal : MonoBehaviour
     public bool isFollowing = false;
 
     private Vector2 escapeTarget;
-    private Vector2 previousPosition;
 
     private static int animalCount = 0;
 
@@ -65,7 +64,6 @@ public class Animal : MonoBehaviour
 
         FindPlayerTransform();
         FindFenceColliders();
-        previousPosition = rigid.position;
         StartCoroutine(RandomMovement());
     }
 
@@ -167,17 +165,15 @@ public class Animal : MonoBehaviour
 
     private void HandleAnimation()
     {
-        Vector2 currentPosition = rigid.position;
-        if (currentPosition != previousPosition)
+        // 동물은 물리 업데이트에서만 움직여서, 위치 비교로 판단하면 물리 업데이트가 없는 프레임마다
+        // 멈춘 것으로 보여 달리기/대기 애니메이션이 번갈아 깜빡였다. AIPath가 계산한 속도로 판단하고,
+        // 아주 작은 좌우 흔들림에는 방향을 뒤집지 않는다.
+        Vector2 velocity = aiPath.velocity;
+        animator.SetBool("isRunning", velocity.sqrMagnitude > 0.01f);
+        if (Mathf.Abs(velocity.x) > 0.1f)
         {
-            animator.SetBool("isRunning", true);
-            spriteRenderer.flipX = currentPosition.x < previousPosition.x;
+            spriteRenderer.flipX = velocity.x < 0f;
         }
-        else
-        {
-            animator.SetBool("isRunning", false);
-        }
-        previousPosition = currentPosition;
     }
 
     private void CheckPlayerDistance()

@@ -24,6 +24,7 @@ public class House : MonoBehaviour
 
     public float roofFadeDuration = 0.3f;
     public float bedReach = 1.5f; // 침대에서 이 거리 안에서 Space 바를 누르면 잠든다
+    public float nearHouseDistance = 1.5f; // 집에서 이 거리 안이면 문으로 들어갈 수 있다고 알려준다
     public float sleepFadeDuration = 0.5f;
     public float sleepDuration = 1.2f;
     public string sleepMessage = "쿨쿨... 푹 자고 일어났더니 체력이 가득 찼어!";
@@ -67,10 +68,28 @@ public class House : MonoBehaviour
             roofFadeCoroutine = StartCoroutine(Fade(roofTilemaps[0].color.a, inside ? 0f : 1f, roofFadeDuration, SetRoofAlpha));
         }
 
-        if (CanSleep() && Input.GetKeyDown(KeyCode.Space))
+        if (CanSleep())
         {
-            StartCoroutine(Sleep());
+            InteractionHint.Show("Space 바를 누르면 침대에서 푹 쉴 수 있어!", 1);
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                StartCoroutine(Sleep());
+            }
         }
+        else if (!isPlayerInside && IsNearHouse(player.transform.position))
+        {
+            InteractionHint.Show("앞쪽 문으로 걸어 들어가면 집에 들어갈 수 있어!");
+        }
+    }
+
+    // 벽과 지붕까지 포함한 집 둘레에서 nearHouseDistance 안에 있는지 확인
+    private bool IsNearHouse(Vector3 worldPosition)
+    {
+        Vector3 min = wallTilemap.CellToWorld(new Vector3Int(interiorCells.xMin - 1, interiorCells.yMin - 1, 0));
+        Vector3 max = wallTilemap.CellToWorld(new Vector3Int(interiorCells.xMax + 1, interiorCells.yMax + 2, 0));
+        float dx = Mathf.Max(min.x - worldPosition.x, 0f, worldPosition.x - max.x);
+        float dy = Mathf.Max(min.y - worldPosition.y, 0f, worldPosition.y - max.y);
+        return dx * dx + dy * dy <= nearHouseDistance * nearHouseDistance;
     }
 
     // 집 안(문간 포함)인지 확인

@@ -6505,7 +6505,7 @@ MonoBehaviour:
   - {fileID: -514129720, guid: 451a2c66df24b1f4d8d6055abafc33fc, type: 3}
   - {fileID: 102405312, guid: 451a2c66df24b1f4d8d6055abafc33fc, type: 3}
   maxStamina: 100
-  recoveryRate: 10
+  recoveryRate: 1
   warningSound: {fileID: 8300000, guid: fbd604851f7b9874ea5ff348c3aa876f, type: 3}
 --- !u!1 &309749384
 GameObject:
@@ -61160,8 +61160,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoursPerDay: 24
-  minutesPerHour: 5
-  realSecondsPerGameMinute: 1
+  minutesPerHour: 60
+  realSecondsPerGameMinute: 1.2
   timeText: {fileID: 1302591998}
   dayText: {fileID: 7112054}
   screenOverlay: {fileID: 1614301413}

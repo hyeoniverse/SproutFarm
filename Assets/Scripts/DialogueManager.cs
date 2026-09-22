@@ -24,7 +24,7 @@ public class DialogueManager : MonoBehaviour
             "새싹 농장에서 너만의 작은 농장을 가꿀 시간이야! 그런데 농장에는 몇 가지 규칙이 있어. 같이 살펴볼까?:Hooray1",
             "이 농장에서는 시간이 빠르게 흐르고 있어! 이 농장에서의 1시간은 현실 세계의 시간으로 계산하면......:MovingEars",
             "......$^%!%^&#@%&#&*(:MovingEars",
-            "30초야! 이곳에서의 시간은 금방 가니까 할 일이 있다면 서둘러야 해! >ㅅ< /:Hooray1",
+            "1분 12초야! 이곳에서의 시간은 금방 가니까 할 일이 있다면 서둘러야 해! >ㅅ< /:Hooray1",
             "그리고 9시간 동안 계속 일하면 체력이 고갈되어 죽을 수 있어!:Sleeping",
             "움직이거나 뛰면 체력이 더 빨리 닳으니까 상황에 따라 전략적으로 체력을 관리해야 해!:Sleeping",
             "체력이 부족하다면 곳곳에 열린 빨간 열매를 먹어봐! 집에 들어가 침대에서 푹 자면 체력이 가득 찰 거야.:Hooray2",
@@ -37,11 +37,11 @@ public class DialogueManager : MonoBehaviour
 
         // ID가 1인 대화 데이터를 추가합니다.
         dialogueData.Add(1, new string[] {
-            "Space Bar를 눌러 포획한 동물을 울타리 안으로 집어넣으세요!:Blinking"
+            "Space 바를 누르면 데려온 동물을 울타리 안에 넣을 수 있어!:Blinking"
         });
 
         dialogueData.Add(2, new string[] {
-            "더 이상 동물을 잡을 수 없습니다! 울타리에 놓아주세요.:Blinking"
+            "더는 동물을 데려갈 수 없어! 먼저 울타리에 넣어 줘.:Blinking"
         });
     }
 

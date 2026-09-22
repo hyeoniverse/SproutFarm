@@ -89,7 +89,9 @@ public class IntroSceneManager : MonoBehaviour
     private IEnumerator MoveUIWithPlayer()
     {
         float elapsedTime = 0f;
-        float canvasCenterX = canvas.GetComponent<RectTransform>().rect.width / 2;
+        // 글자는 화면 픽셀 좌표로 움직이므로 가운데도 화면 픽셀로 잡는다
+        // (rect.width는 캔버스 단위라 화면 크기에 따라 배율이 붙으면 픽셀과 달라진다)
+        float canvasCenterX = canvas.transform.position.x;
 
         while (elapsedTime < 2f)
         {
@@ -100,7 +102,8 @@ public class IntroSceneManager : MonoBehaviour
             {
                 textToFollow.transform.position = playerScreenPosition + initialTextOffset;
 
-                if (Mathf.Abs(textToFollow.transform.position.x - canvasCenterX) < 1f)
+                // 한 프레임에 1픽셀 넘게 움직일 수 있으니 가운데를 지나치면 멈춘다
+                if (textToFollow.transform.position.x >= canvasCenterX)
                 {
                     textToFollow.transform.position = new Vector3(canvasCenterX, textToFollow.transform.position.y, textToFollow.transform.position.z);
 

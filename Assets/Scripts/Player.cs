@@ -5,11 +5,11 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    // GameManager ¹× DayNightCycle ÂüÁ¶
+    // GameManager ë° DayNightCycle ì°¸ì¡°
     public GameManager gameManager;
     public DayNightCycle dayNightCycle;
 
-    // ÀÌµ¿ °ü·Ã º¯¼öµé
+    // ì´ë™ ê´€ë ¨ ë³€ìˆ˜ë“¤
     private Rigidbody2D rigidBody;
     public float baseSpeed;
     public float boostedSpeed;
@@ -17,34 +17,34 @@ public class Player : MonoBehaviour
     public Vector2 inputVector;
     private Vector3 directionVector;
 
-    // ½ºÇÁ¶óÀÌÆ® ¹× ¾Ö´Ï¸ŞÀÌ¼Ç °ü·Ã º¯¼öµé
+    // ìŠ¤í”„ë¼ì´íŠ¸ ë° ì• ë‹ˆë©”ì´ì…˜ ê´€ë ¨ ë³€ìˆ˜ë“¤
     private SpriteRenderer spriteRenderer;
     public Animator animator;
 
-    // ½ºÄµÇÒ ¿ÀºêÁ§Æ® ÂüÁ¶
+    // ìŠ¤ìº”í•  ì˜¤ë¸Œì íŠ¸ ì°¸ì¡°
     private GameObject scanObject;
-    // È­»ìÇ¥ ÀÌ¹ÌÁö °´Ã¼
+    // í™”ì‚´í‘œ ì´ë¯¸ì§€ ê°ì²´
     public Image arrowSpriteImage;
 
-    // ÀÌµ¿ È¿°úÀ½ °ü·Ã º¯¼öµé
+    // ì´ë™ íš¨ê³¼ìŒ ê´€ë ¨ ë³€ìˆ˜ë“¤
     private AudioSource movementAudioSource;
     public AudioClip movementSound;
 
-    // ÆÄÆ¼Å¬ ½Ã½ºÅÛ ÂüÁ¶
+    // íŒŒí‹°í´ ì‹œìŠ¤í…œ ì°¸ì¡°
     private ParticleSystem movementParticleSystem;
 
-    // ÇÃ·¹ÀÌ¾î »óÅÂ ÂüÁ¶
+    // í”Œë ˆì´ì–´ ìƒíƒœ ì°¸ì¡°
     private PlayerStatus playerStatus;
 
     public Tilemap roofTilemap;
 
-    // Ã¼·ÂÀÌ ÀÌ °ª ÀÌÇÏ·Î ¶³¾îÁö¸é È­»ìÇ¥°¡ µ¿¹° ´ë½Å ½¯ °÷(Áı)À» °¡¸®Å´
+    // ì²´ë ¥ì´ ì´ ê°’ ì´í•˜ë¡œ ë–¨ì–´ì§€ë©´ í™”ì‚´í‘œê°€ ë™ë¬¼ ëŒ€ì‹  ì‰´ ê³³(ì§‘)ì„ ê°€ë¦¬í‚´
     public float lowStaminaThreshold = 30f;
-    // Ä§´ë¿¡¼­ ½¬´Â µ¿¾È¿¡´Â ¿òÁ÷ÀÌÁö ¾ÊÀ½
+    // ì¹¨ëŒ€ì—ì„œ ì‰¬ëŠ” ë™ì•ˆì—ëŠ” ì›€ì§ì´ì§€ ì•ŠìŒ
     public bool isResting;
     private House house;
 
-    // ÄÄÆ÷³ÍÆ® ÃÊ±âÈ­
+    // ì»´í¬ë„ŒíŠ¸ ì´ˆê¸°í™”
     private void Awake()
     {
         rigidBody = GetComponent<Rigidbody2D>();
@@ -55,19 +55,19 @@ public class Player : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        // È­»ìÇ¥ ÀÌ¹ÌÁö °´Ã¼ ÃÊ±âÈ­
+        // í™”ì‚´í‘œ ì´ë¯¸ì§€ ê°ì²´ ì´ˆê¸°í™”
         if (arrowSpriteImage != null)
         {
             arrowSpriteImage.gameObject.SetActive(false);
         }
 
-        // ÀÌµ¿ È¿°úÀ½¿ë AudioSource ÃÊ±âÈ­
+        // ì´ë™ íš¨ê³¼ìŒìš© AudioSource ì´ˆê¸°í™”
         movementAudioSource = gameObject.AddComponent<AudioSource>();
         movementAudioSource.clip = movementSound;
         movementAudioSource.loop = true;
         movementAudioSource.playOnAwake = false;
 
-        // ÆÄÆ¼Å¬ ½Ã½ºÅÛ ÃÊ±âÈ­
+        // íŒŒí‹°í´ ì‹œìŠ¤í…œ ì´ˆê¸°í™”
         movementParticleSystem = GetComponentInChildren<ParticleSystem>();
         if (movementParticleSystem != null)
         {
@@ -75,48 +75,49 @@ public class Player : MonoBehaviour
             emission.enabled = false;
         }
 
-        // PlayerStatus ÂüÁ¶ ÃÊ±âÈ­
+        // PlayerStatus ì°¸ì¡° ì´ˆê¸°í™”
         playerStatus = FindObjectOfType<PlayerStatus>();
         house = FindAnyObjectByType<House>();
     }
 
-    // ¸Å ÇÁ·¹ÀÓ È£ÃâµÇ´Â ¾÷µ¥ÀÌÆ® ¸Ş¼­µå
+    // ë§¤ í”„ë ˆì„ í˜¸ì¶œë˜ëŠ” ì—…ë°ì´íŠ¸ ë©”ì„œë“œ
     void Update()
     {
-        UpdateDirectionVector(); // ÀÌµ¿ ¹æÇâ º¤ÅÍ ¾÷µ¥ÀÌÆ®
-        HandleDialogueInput(); // ´ëÈ­ ÀÔ·Â Ã³¸®
-        UpdatePlayerSpeed(); // ÇÃ·¹ÀÌ¾î ¼Óµµ ¾÷µ¥ÀÌÆ®
-        UpdateArrowDirection(); // È­»ìÇ¥ ¹æÇâ ¾÷µ¥ÀÌÆ®
-        HandleMovementSound(); // ÀÌµ¿ È¿°úÀ½ Ã³¸®
-        HandleStaminaRecovery(); // ½ºÅÂ¹Ì³ª È¸º¹ Ã³¸®
+        UpdateDirectionVector(); // ì´ë™ ë°©í–¥ ë²¡í„° ì—…ë°ì´íŠ¸
+        HandleDialogueInput(); // ëŒ€í™” ì…ë ¥ ì²˜ë¦¬
+        HandleCaptureInput(); // ìš¸íƒ€ë¦¬ì— ë™ë¬¼ ë„£ê¸° ì²˜ë¦¬
+        UpdatePlayerSpeed(); // í”Œë ˆì´ì–´ ì†ë„ ì—…ë°ì´íŠ¸
+        UpdateArrowDirection(); // í™”ì‚´í‘œ ë°©í–¥ ì—…ë°ì´íŠ¸
+        HandleMovementSound(); // ì´ë™ íš¨ê³¼ìŒ ì²˜ë¦¬
+        HandleStaminaRecovery(); // ìŠ¤íƒœë¯¸ë‚˜ íšŒë³µ ì²˜ë¦¬
     }
 
-    // ¹°¸® ¾÷µ¥ÀÌÆ® ¸Ş¼­µå
+    // ë¬¼ë¦¬ ì—…ë°ì´íŠ¸ ë©”ì„œë“œ
     private void FixedUpdate()
     {
         if (gameManager == null || dayNightCycle == null)
         {
-            Debug.LogError("GameManager ¶Ç´Â DayNightCycleÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("GameManager ë˜ëŠ” DayNightCycleì´ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        if (gameManager.IsInitialDialogue()) // Ã³À½ ´ÙÀÌ¾ó·Î±×¸¦ Àç»ı ÁßÀÏ ¶§´Â ¿òÁ÷ÀÌÁö ¾ÊÀ½
+        if (gameManager.IsInitialDialogue()) // ì²˜ìŒ ë‹¤ì´ì–¼ë¡œê·¸ë¥¼ ì¬ìƒ ì¤‘ì¼ ë•ŒëŠ” ì›€ì§ì´ì§€ ì•ŠìŒ
             return;
 
-        if (isResting) // Ä§´ë¿¡¼­ ½¬´Â Áß¿¡´Â ¿òÁ÷ÀÌÁö ¾ÊÀ½
+        if (isResting) // ì¹¨ëŒ€ì—ì„œ ì‰¬ëŠ” ì¤‘ì—ëŠ” ì›€ì§ì´ì§€ ì•ŠìŒ
             return;
 
-        MovePlayer(); // ÇÃ·¹ÀÌ¾î ÀÌµ¿ Ã³¸®
-        DetectObject(); // °´Ã¼ °¨Áö
+        MovePlayer(); // í”Œë ˆì´ì–´ ì´ë™ ì²˜ë¦¬
+        DetectObject(); // ê°ì²´ ê°ì§€
     }
 
-    // ÀÌµ¿ ÀÔ·Â Ã³¸®
+    // ì´ë™ ì…ë ¥ ì²˜ë¦¬
     private void OnMove(InputValue value)
     {
         inputVector = value.Get<Vector2>();
     }
 
-    // Ãæµ¹ Ã³¸®
+    // ì¶©ëŒ ì²˜ë¦¬
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Animal"))
@@ -126,7 +127,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    // Æ®¸®°Å Ãæµ¹ Ã³¸®
+    // íŠ¸ë¦¬ê±° ì¶©ëŒ ì²˜ë¦¬
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -135,20 +136,20 @@ public class Player : MonoBehaviour
             if (animal != null && animal.isFollowing)
             {
                 animal.StopFollowingPlayer();
-                // ¿ïÅ¸¸® À§Ä¡¸¦ ¼³Á¤ÇÏ°í ¿ïÅ¸¸® ¾ÈÀ¸·Î ³Ö±â
-                Vector2 fencePosition = new Vector2(4, 4); // ¿ïÅ¸¸®ÀÇ Áß½É À§Ä¡
+                // ìš¸íƒ€ë¦¬ ìœ„ì¹˜ë¥¼ ì„¤ì •í•˜ê³  ìš¸íƒ€ë¦¬ ì•ˆìœ¼ë¡œ ë„£ê¸°
+                Vector2 fencePosition = new Vector2(4, 4); // ìš¸íƒ€ë¦¬ì˜ ì¤‘ì‹¬ ìœ„ì¹˜
                 animal.CapturedIn(fencePosition);
             }
         }
     }
 
-    // ¾Ö´Ï¸ŞÀÌ¼Ç ¾÷µ¥ÀÌÆ®
+    // ì• ë‹ˆë©”ì´ì…˜ ì—…ë°ì´íŠ¸
     private void LateUpdate()
     {
         UpdateAnimation();
     }
 
-    // ÀÌµ¿ ¹æÇâ º¤ÅÍ ¾÷µ¥ÀÌÆ®
+    // ì´ë™ ë°©í–¥ ë²¡í„° ì—…ë°ì´íŠ¸
     private void UpdateDirectionVector()
     {
         if (inputVector.y == 1) directionVector = Vector3.up;
@@ -157,12 +158,12 @@ public class Player : MonoBehaviour
         else if (inputVector.x == -1) directionVector = Vector3.left;
     }
 
-    // ´ëÈ­ ÀÔ·Â Ã³¸®
+    // ëŒ€í™” ì…ë ¥ ì²˜ë¦¬
     private void HandleDialogueInput()
     {
         if (gameManager == null)
         {
-            Debug.LogError("GameManager°¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("GameManagerê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -172,12 +173,12 @@ public class Player : MonoBehaviour
         }
     }
 
-    // ÇÃ·¹ÀÌ¾î ¼Óµµ ¾÷µ¥ÀÌÆ®
+    // í”Œë ˆì´ì–´ ì†ë„ ì—…ë°ì´íŠ¸
     private void UpdatePlayerSpeed()
     {
         if (dayNightCycle == null)
         {
-            Debug.LogError("DayNightCycleÀÌ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("DayNightCycleì´ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -186,17 +187,47 @@ public class Player : MonoBehaviour
         int followingAnimalsCount = GetFollowingAnimalsCount();
         currentSpeed = Mathf.Max(2.5f, currentBaseSpeed - 0.1f * followingAnimalsCount);
 
-        dayNightCycle.UpdatePlayerSpeed(currentSpeed);
+        // ì²´ë ¥ì€ ì‹¤ì œë¡œ ì›€ì§ì¼ ë•Œë§Œ ë” ë‹³ê²Œ í•˜ê³ , ê±·ê¸°ë¥¼ 1ë°°ë¡œ ë‘ê³  ë‹¬ë¦¬ê¸°ëŠ” ê·¸ ë¹„ìœ¨ë§Œí¼ ë” ë‹³ê²Œ í•¨
+        float staminaFactor = inputVector.magnitude > 0 ? currentBaseSpeed / baseSpeed : 0f;
+        dayNightCycle.UpdatePlayerSpeed(staminaFactor);
     }
 
-    // ÇÃ·¹ÀÌ¾î ÀÌµ¿ Ã³¸®
+    // í”Œë ˆì´ì–´ ì´ë™ ì²˜ë¦¬
     private void MovePlayer()
     {
         Vector2 nextVector = inputVector.normalized * currentSpeed * Time.fixedDeltaTime;
         rigidBody.MovePosition(rigidBody.position + nextVector);
     }
 
-    // °´Ã¼ °¨Áö Ã³¸®
+    // ìš¸íƒ€ë¦¬ë¥¼ ë³´ê³  Space ë°”ë¥¼ ëˆ„ë¥´ë©´ ë”°ë¼ì˜¤ëŠ” ë™ë¬¼ì„ ìš¸íƒ€ë¦¬ì— ë„£ìŒ
+    // (í‚¤ ì…ë ¥ì€ FixedUpdateê°€ ëŒì§€ ì•ŠëŠ” í”„ë ˆì„ì— ë†“ì¹  ìˆ˜ ìˆì–´ì„œ Updateì—ì„œ ì²˜ë¦¬)
+    private void HandleCaptureInput()
+    {
+        ObjectData objectData = scanObject != null ? scanObject.GetComponent<ObjectData>() : null;
+        if (objectData == null || objectData.id != 1)
+            return;
+
+        if (!gameManager.HasFollowingAnimals())
+        {
+            InteractionHint.Show("ìš¸íƒ€ë¦¬ì— ë„£ì„ ë™ë¬¼ì´ ì—†ì–´! ë„ë§ì¹œ ë™ë¬¼ë¶€í„° ì¡ì•„ ì™€.", 1);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
+            {
+                Animal animalScript = animal.GetComponent<Animal>();
+                if (animalScript != null && animalScript.isFollowing)
+                {
+                    Vector2 fencePosition = new Vector2(4, 4); // ìš¸íƒ€ë¦¬ì˜ ì¤‘ì‹¬ ìœ„ì¹˜
+                    animalScript.CapturedIn(fencePosition);
+                }
+            }
+        }
+    }
+
+    // ê°ì²´ ê°ì§€ ì²˜ë¦¬
     private void DetectObject()
     {
         Debug.DrawRay(rigidBody.position, directionVector * 0.7f, new Color(0, 1, 0));
@@ -213,19 +244,6 @@ public class Player : MonoBehaviour
                 {
                     gameManager.ShowDialogue(objectData.id);
                 }
-
-                if (objectData.id == 1 && Input.GetKeyDown(KeyCode.Space))
-                {
-                    foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
-                    {
-                        Animal animalScript = animal.GetComponent<Animal>();
-                        if (animalScript != null && animalScript.isFollowing)
-                        {
-                            Vector2 fencePosition = new Vector2(4, 4); // ¿ïÅ¸¸®ÀÇ Áß½É À§Ä¡
-                            animalScript.CapturedIn(fencePosition);
-                        }
-                    }
-                }
             }
         }
         else
@@ -238,12 +256,12 @@ public class Player : MonoBehaviour
         }
     }
 
-    // ¾Ö´Ï¸ŞÀÌ¼Ç ¾÷µ¥ÀÌÆ®
+    // ì• ë‹ˆë©”ì´ì…˜ ì—…ë°ì´íŠ¸
     private void UpdateAnimation()
     {
         if (gameManager == null)
         {
-            Debug.LogError("GameManager°¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("GameManagerê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
@@ -262,7 +280,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    // ÀÌµ¿ È¿°úÀ½ Ã³¸®
+    // ì´ë™ íš¨ê³¼ìŒ ì²˜ë¦¬
     private void HandleMovementSound()
     {
         if (gameManager != null && gameManager.IsInitialDialogue())
@@ -309,7 +327,7 @@ public class Player : MonoBehaviour
         }
     }
 
-    // ½ºÅÂ¹Ì³ª È¸º¹ Ã³¸®
+    // ìŠ¤íƒœë¯¸ë‚˜ íšŒë³µ ì²˜ë¦¬
     private void HandleStaminaRecovery()
     {
         if (inputVector.magnitude == 0)
@@ -318,16 +336,16 @@ public class Player : MonoBehaviour
         }
     }
 
-    // È­»ìÇ¥ ¹æÇâ ¾÷µ¥ÀÌÆ®
+    // í™”ì‚´í‘œ ë°©í–¥ ì—…ë°ì´íŠ¸
     private void UpdateArrowDirection()
     {
         if (arrowSpriteImage == null)
         {
-            Debug.LogError("Arrow Sprite Image°¡ ÇÒ´çµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("Arrow Sprite Imageê°€ í• ë‹¹ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        // Ã¼·ÂÀÌ ºÎÁ·ÇÏ¸é °¡Àå °¡±î¿î µ¿¹° ´ë½Å ½¯ °÷(¹Û¿¡¼­´Â Áı ¹®, Áı ¾È¿¡¼­´Â Ä§´ë)À» °¡¸®Å´
+        // ì²´ë ¥ì´ ë¶€ì¡±í•˜ë©´ ê°€ì¥ ê°€ê¹Œìš´ ë™ë¬¼ ëŒ€ì‹  ì‰´ ê³³(ë°–ì—ì„œëŠ” ì§‘ ë¬¸, ì§‘ ì•ˆì—ì„œëŠ” ì¹¨ëŒ€)ì„ ê°€ë¦¬í‚´
         if (house != null && playerStatus.stamina <= lowStaminaThreshold)
         {
             arrowSpriteImage.gameObject.SetActive(true);
@@ -335,7 +353,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        // µ¿¹° ÅÂ±×¸¦ °¡Áø ¿ÀºêÁ§Æ®µéÀ» Ã£À½
+        // ë™ë¬¼ íƒœê·¸ë¥¼ ê°€ì§„ ì˜¤ë¸Œì íŠ¸ë“¤ì„ ì°¾ìŒ
         GameObject[] animals = GameObject.FindGameObjectsWithTag("Animal");
         if (animals.Length == 0)
         {
@@ -343,7 +361,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        // °¡Àå °¡±î¿î µ¿¹°À» Ã£À½
+        // ê°€ì¥ ê°€ê¹Œìš´ ë™ë¬¼ì„ ì°¾ìŒ
         GameObject closestAnimal = null;
         float closestDistance = float.MaxValue;
 
@@ -352,7 +370,7 @@ public class Player : MonoBehaviour
             Animal animalScript = animal.GetComponent<Animal>();
             if (animalScript == null || animalScript.isFollowing || animalScript.isCaptured)
             {
-                continue; // isFollowing ÁßÀÌ°Å³ª isCaptured »óÅÂÀÎ µ¿¹°Àº Á¦¿Ü
+                continue; // isFollowing ì¤‘ì´ê±°ë‚˜ isCaptured ìƒíƒœì¸ ë™ë¬¼ì€ ì œì™¸
             }
 
             float distance = Vector2.Distance(transform.position, animal.transform.position);
@@ -372,12 +390,12 @@ public class Player : MonoBehaviour
         {
             arrowSpriteImage.gameObject.SetActive(true);
 
-            // ¸ğµç µ¿¹°ÀÌ ÀâÇûÀ» °æ¿ì 0,0À» °¡¸®Å´
+            // ëª¨ë“  ë™ë¬¼ì´ ì¡í˜”ì„ ê²½ìš° 0,0ì„ ê°€ë¦¬í‚´
             PointArrowAt(Vector2.zero);
         }
     }
 
-    // È­»ìÇ¥°¡ target ÂÊÀ» °¡¸®Å°µµ·Ï È¸Àü
+    // í™”ì‚´í‘œê°€ target ìª½ì„ ê°€ë¦¬í‚¤ë„ë¡ íšŒì „
     private void PointArrowAt(Vector2 target)
     {
         Vector2 direction = target - (Vector2)transform.position;
@@ -385,11 +403,11 @@ public class Player : MonoBehaviour
         RectTransform arrowRectTransform = arrowSpriteImage.GetComponent<RectTransform>();
         if (arrowRectTransform != null)
         {
-            arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 135); // °í¾çÀÌ ¹ß ¾ÆÀÌÄÜÀº ¿ŞÂÊ À§(135µµ)¸¦ °¡¸®Å°¹Ç·Î ±×¸¸Å­ »©¼­ ¸ÂÃã
+            arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 135); // ê³ ì–‘ì´ ë°œ ì•„ì´ì½˜ì€ ì™¼ìª½ ìœ„(135ë„)ë¥¼ ê°€ë¦¬í‚¤ë¯€ë¡œ ê·¸ë§Œí¼ ë¹¼ì„œ ë§ì¶¤
         }
     }
 
-    // µû¶ó¿À´Â µ¿¹°ÀÇ ¼ö¸¦ ¹İÈ¯ÇÏ´Â ¸Ş¼­µå
+    // ë”°ë¼ì˜¤ëŠ” ë™ë¬¼ì˜ ìˆ˜ë¥¼ ë°˜í™˜í•˜ëŠ” ë©”ì„œë“œ
     private int GetFollowingAnimalsCount()
     {
         int count = 0;
