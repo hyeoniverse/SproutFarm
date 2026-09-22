@@ -375,7 +375,7 @@ public class Player : MonoBehaviour
             arrowSpriteImage.gameObject.SetActive(true);
             PointArrowAt(house.GetRestPoint(transform.position));
             // 나침반이 동물이 아닌 집을 가리키는 중임을 알려줌 (근처 안내가 있으면 그쪽이 먼저 보임)
-            InteractionHint.Show("체력이 얼마 안 남았어! 지금 나침반은 동물 말고 집을 가리키고 있어. 집에 가서 침대에서 푹 쉬자!", -1);
+            InteractionHint.Show("체력이 얼마 안 남았어! 지금 나침반은 집을 가리키고 있어. 집에 가서 침대에서 푹 쉬자!", -1);
             return;
         }
 

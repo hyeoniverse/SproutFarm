@@ -2,9 +2,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 왼쪽 아래에 지금까지의 환산 점수(별 + "점수 N")를 실시간으로 보여준다.
-// 오른쪽 아래 동물 수 표시의 아이콘·숫자를 복제해 같은 모양으로 만든다.
-// 클리어 보너스·남은 시간·남은 체력 점수는 게임이 끝날 때 더해진다.
+// 왼쪽 아래에 지금 끝나면 받을 환산 점수(잡은 동물·열매·남은 시간·남은 체력)를 별 + "점수 N"으로 실시간 보여준다.
+// 오른쪽 아래 동물 수 표시의 아이콘·숫자를 복제해 같은 모양으로 만든다. 클리어 보너스는 클리어할 때 더해진다.
 public class ScoreDisplay : MonoBehaviour
 {
     public Image iconTemplate;       // 동물 수 옆 아이콘 (CowImage)
@@ -15,12 +14,16 @@ public class ScoreDisplay : MonoBehaviour
     public Vector2 textPosition = new Vector2(115f, 60f); // 글자의 왼쪽 끝
 
     private Animal[] animals;
+    private DayNightCycle dayNightCycle;
+    private PlayerStatus playerStatus;
     private TMP_Text scoreText;
     private int shownScore = -1;
 
     private void Start()
     {
         animals = FindObjectsByType<Animal>(FindObjectsSortMode.None);
+        dayNightCycle = FindAnyObjectByType<DayNightCycle>();
+        playerStatus = FindAnyObjectByType<PlayerStatus>();
         Vector2 bottomLeft = Vector2.zero;
 
         Image icon = Instantiate(iconTemplate, iconTemplate.transform.parent);
@@ -48,18 +51,7 @@ public class ScoreDisplay : MonoBehaviour
 
     private void Update()
     {
-        // 튜토리얼 동안에는 동물이 아직 도망치기 전이라 잡은 것으로 치지 않는다
-        int captured = 0;
-        if (!GameManager.instance.IsInitialDialogue())
-        {
-            foreach (Animal animal in animals)
-            {
-                if (animal.isCaptured)
-                    captured++;
-            }
-        }
-
-        int score = GameResult.CurrentScore(captured);
+        int score = GameResult.CurrentScore(animals, dayNightCycle, playerStatus);
         if (score == shownScore)
             return;
 
