@@ -37,15 +37,20 @@
     return (hours ? hours + "시간 " : "") + rest + "분";
   }
 
+  // Remaining time counts only for the share of animals caught (same as GameResult.Calculate).
   function breakdownRows(result) {
+    var share = result.totalAnimals > 0 ? result.animals / result.totalAnimals : 0;
+    var timePoints = result.totalAnimals > 0
+      ? Math.floor((result.remainingMinutes * POINTS.remainingMinute * result.animals) / result.totalAnimals)
+      : 0;
     var rows = [
-      ["울타리에 넣은 동물", result.animals + " / " + result.totalAnimals + "마리", result.animals * POINTS.animal],
+      ["잡은 동물", result.animals + " / " + result.totalAnimals + "마리", result.animals * POINTS.animal],
       ["먹은 열매", result.berries + "개", result.berries * POINTS.berry],
+      ["남은 시간", formatMinutes(result.remainingMinutes) + " × " + Math.round(share * 100) + "%", timePoints],
+      ["남은 체력", result.stamina + "%", result.stamina * POINTS.stamina],
     ];
     if (result.victory) {
       rows.push(["클리어 보너스", "", POINTS.clearBonus]);
-      rows.push(["남은 시간", formatMinutes(result.remainingMinutes), result.remainingMinutes * POINTS.remainingMinute]);
-      rows.push(["남은 체력", result.stamina + "%", result.stamina * POINTS.stamina]);
     }
     return rows;
   }

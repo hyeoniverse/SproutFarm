@@ -1,6 +1,6 @@
 // Leaderboard API (Vercel serverless function).
 //   GET  /api/scores -> { top: [{ rank, name, victory, score }] }  (top 10)
-//   POST /api/scores  { name, victory, animals, berries, remainingMinutes, stamina }
+//   POST /api/scores  { name, victory, animals, berries, remainingMinutes, stamina }  (animals = caught, of 20)
 //                    -> { rank, score, top }
 // The score is recomputed here from the submitted counts (clamped to what one game
 // can produce), so a client can't simply send a huge total.
@@ -15,11 +15,13 @@ const TOP_COUNT = 10;
 const NAME_MAX_LENGTH = 10;
 const SUBMIT_INTERVAL_SECONDS = 10;
 
-// Same formula as Assets/Scripts/GameResult.cs in the Unity project.
+// Same formula as GameResult.Calculate in the Unity project (Assets/Scripts/GameResult.cs).
 const POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, stamina: 5 };
-// Most one game can produce: 20 animals, a berry every 15s over an 18-minute day,
+// Animals in one game; remaining-time points are scaled by the share of them caught.
+const TOTAL_ANIMALS = 20;
+// Most one game can produce: every animal, a berry every 15s over an 18-minute day,
 // and 9:00 to midnight left on the clock. Update these if the game changes.
-const LIMITS = { animals: 20, berries: 100, remainingMinutes: 15 * 60, stamina: 100 };
+const LIMITS = { animals: TOTAL_ANIMALS, berries: 100, remainingMinutes: 15 * 60, stamina: 100 };
 
 function redisUrl() {
   return process.env.sproutfarm_REDIS_URL || process.env.REDIS_URL;
@@ -49,12 +51,17 @@ function clampCount(value, max) {
   return Number.isFinite(number) ? Math.min(Math.max(number, 0), max) : 0;
 }
 
+// Remaining time only counts for the share of animals caught, so giving up early
+// doesn't earn more time points than playing on.
 function scoreOf(record) {
-  let score = record.animals * POINTS.animal + record.berries * POINTS.berry;
-  if (record.victory) {
-    score += POINTS.clearBonus + record.remainingMinutes * POINTS.remainingMinute + record.stamina * POINTS.stamina;
-  }
-  return score;
+  const timePoints = Math.floor((record.remainingMinutes * POINTS.remainingMinute * record.animals) / TOTAL_ANIMALS);
+  return (
+    record.animals * POINTS.animal +
+    record.berries * POINTS.berry +
+    timePoints +
+    record.stamina * POINTS.stamina +
+    (record.victory ? POINTS.clearBonus : 0)
+  );
 }
 
 function cleanName(name) {
@@ -86,9 +93,10 @@ async function submit(client, req, res) {
     return res.status(429).json({ error: "too_many_requests" });
   }
 
+  const animals = clampCount(body.animals, LIMITS.animals);
   const record = {
-    victory: body.victory === true,
-    animals: clampCount(body.animals, LIMITS.animals),
+    victory: body.victory === true && animals === TOTAL_ANIMALS,
+    animals,
     berries: clampCount(body.berries, LIMITS.berries),
     remainingMinutes: clampCount(body.remainingMinutes, LIMITS.remainingMinutes),
     stamina: clampCount(body.stamina, LIMITS.stamina),
