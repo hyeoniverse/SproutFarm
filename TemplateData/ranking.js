@@ -6,7 +6,7 @@
   var POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, stamina: 5 };
   var NAME_KEY = "sproutfarm:name";
 
-  var overlay, list, message, form, input, submitButton, current;
+  var overlay, face, title, total, breakdown, list, message, form, input, submitButton, current;
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -58,6 +58,14 @@
     }
     top.forEach(function (entry) {
       var item = el("li", entry.rank === highlightRank ? "is-mine" : "");
+      var medal = el("span", "");
+      if (entry.rank <= 3) {
+        var star = el("img", "result-star");
+        star.src = "TemplateData/ui/star.png";
+        star.alt = "";
+        medal.appendChild(star);
+      }
+      item.appendChild(medal);
       item.appendChild(el("span", "result-rank", entry.rank + "위"));
       item.appendChild(el("span", "result-name", entry.name));
       item.appendChild(el("span", "result-badge", entry.victory ? "클리어" : ""));
@@ -137,20 +145,34 @@
     panel.setAttribute("role", "dialog");
     panel.setAttribute("aria-labelledby", "result-title");
 
-    var title = el("h2", "");
+    // Portrait and speech bubble, laid out like the in-game dialogue
+    var head = el("div", "result-head");
+    var portrait = el("div", "result-portrait");
+    face = el("img", "result-face");
+    face.alt = "";
+    portrait.appendChild(face);
+    head.appendChild(portrait);
+    var bubble = el("div", "result-bubble");
+    title = el("h2", "");
     title.id = "result-title";
-    panel.appendChild(title);
+    total = el("p", "result-total");
+    bubble.appendChild(title);
+    bubble.appendChild(total);
+    head.appendChild(bubble);
+    panel.appendChild(head);
 
-    var table = el("dl", "result-breakdown");
-    panel.appendChild(table);
+    var scoreBox = el("div", "result-box");
+    breakdown = el("dl", "result-breakdown");
+    scoreBox.appendChild(breakdown);
+    panel.appendChild(scoreBox);
 
     form = el("form", "result-form");
-    input = el("input", "");
+    input = el("input", "result-field");
     input.type = "text";
     input.maxLength = 10;
     input.placeholder = "이름 (10자까지)";
     input.setAttribute("aria-label", "랭킹에 올릴 이름");
-    submitButton = el("button", "", "랭킹에 올리기");
+    submitButton = el("button", "result-button", "랭킹에 올리기");
     submitButton.type = "submit";
     form.appendChild(input);
     form.appendChild(submitButton);
@@ -161,11 +183,13 @@
     message.setAttribute("aria-live", "polite");
     panel.appendChild(message);
 
-    panel.appendChild(el("h3", "", "랭킹 TOP 10"));
+    var board = el("div", "result-box");
+    board.appendChild(el("h3", "", "랭킹 TOP 10"));
     list = el("ol", "result-list");
-    panel.appendChild(list);
+    board.appendChild(list);
+    panel.appendChild(board);
 
-    var close = el("button", "result-close", "닫기");
+    var close = el("button", "result-button result-close", "닫기");
     close.type = "button";
     close.addEventListener("click", function () {
       overlay.hidden = true;
@@ -180,21 +204,17 @@
     if (!overlay) build();
     current = result;
 
-    overlay.querySelector("#result-title").textContent = result.victory ? "클리어! 동물을 모두 찾았어" : "게임 오버";
-    var table = overlay.querySelector(".result-breakdown");
-    table.textContent = "";
+    face.src = result.victory ? "TemplateData/ui/face-clear.png" : "TemplateData/ui/face-gameover.png";
+    title.textContent = result.victory ? "클리어! 동물을 모두 찾았어" : "게임 오버... 다음엔 꼭 잡자!";
+    total.textContent = "총점 " + result.score.toLocaleString("ko-KR") + "점";
+    breakdown.textContent = "";
     breakdownRows(result).forEach(function (row) {
       var line = el("div", "result-row");
       line.appendChild(el("dt", "", row[0]));
       line.appendChild(el("dd", "result-detail", row[1]));
       line.appendChild(el("dd", "result-points", "+" + row[2].toLocaleString("ko-KR")));
-      table.appendChild(line);
+      breakdown.appendChild(line);
     });
-    var total = el("div", "result-row result-total");
-    total.appendChild(el("dt", "", "총점"));
-    total.appendChild(el("dd", "result-detail", ""));
-    total.appendChild(el("dd", "result-points", result.score.toLocaleString("ko-KR") + "점"));
-    table.appendChild(total);
 
     input.value = readSavedName();
     input.disabled = false;

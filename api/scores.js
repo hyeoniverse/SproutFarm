@@ -4,10 +4,11 @@
 //                    -> { rank, score, top }
 // The score is recomputed here from the submitted counts (clamped to what one game
 // can produce), so a client can't simply send a huge total.
-// Storage is Upstash Redis: connect it to the project under Storage in the Vercel
-// dashboard, which adds the KV_REST_API_* (or UPSTASH_REDIS_REST_*) variables.
+// Storage is the Redis database connected to the project under Storage in the Vercel
+// dashboard, which provides its connection URL as sproutfarm_REDIS_URL.
 
 const { randomUUID } = require("crypto");
+const { createClient } = require("redis");
 
 const LEADERBOARD_KEY = "sproutfarm:leaderboard";
 const TOP_COUNT = 10;
@@ -20,23 +21,27 @@ const POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, s
 // and 9:00 to midnight left on the clock. Update these if the game changes.
 const LIMITS = { animals: 20, berries: 100, remainingMinutes: 15 * 60, stamina: 100 };
 
-function redisConfig() {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  return url && token ? { url, token } : null;
+function redisUrl() {
+  return process.env.sproutfarm_REDIS_URL || process.env.REDIS_URL;
 }
 
-async function redis(config, command) {
-  const response = await fetch(config.url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${config.token}` },
-    body: JSON.stringify(command),
-  });
-  const body = await response.json();
-  if (!response.ok || body.error) {
-    throw new Error(body.error || `Redis request failed with ${response.status}`);
+// One connection per function instance, reused across warm invocations.
+let clientPromise = null;
+
+function getClient() {
+  if (!clientPromise) {
+    const client = createClient({ url: redisUrl() });
+    client.on("error", (error) => console.error("Redis client error", error));
+    clientPromise = client.connect().then(() => client).catch((error) => {
+      clientPromise = null;
+      throw error;
+    });
   }
-  return body.result;
+  return clientPromise;
+}
+
+async function redis(client, command) {
+  return client.sendCommand(command.map(String));
 }
 
 function clampCount(value, max) {
@@ -58,8 +63,8 @@ function cleanName(name) {
     .join("");
 }
 
-async function topEntries(config) {
-  const flat = await redis(config, ["ZREVRANGE", LEADERBOARD_KEY, 0, TOP_COUNT - 1, "WITHSCORES"]);
+async function topEntries(client) {
+  const flat = await redis(client, ["ZREVRANGE", LEADERBOARD_KEY, 0, TOP_COUNT - 1, "WITHSCORES"]);
   const entries = [];
   for (let i = 0; i < flat.length; i += 2) {
     const entry = JSON.parse(flat[i]);
@@ -68,7 +73,7 @@ async function topEntries(config) {
   return entries;
 }
 
-async function submit(config, req, res) {
+async function submit(client, req, res) {
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
   const name = cleanName(body.name);
   if (!name) {
@@ -76,7 +81,7 @@ async function submit(config, req, res) {
   }
 
   const ip = String(req.headers["x-forwarded-for"] || "unknown").split(",")[0].trim();
-  const allowed = await redis(config, ["SET", `sproutfarm:ratelimit:${ip}`, "1", "NX", "EX", SUBMIT_INTERVAL_SECONDS]);
+  const allowed = await redis(client, ["SET", `sproutfarm:ratelimit:${ip}`, "1", "NX", "EX", SUBMIT_INTERVAL_SECONDS]);
   if (allowed !== "OK") {
     return res.status(429).json({ error: "too_many_requests" });
   }
@@ -91,24 +96,24 @@ async function submit(config, req, res) {
   const score = scoreOf(record);
   const member = JSON.stringify({ id: randomUUID(), name, victory: record.victory, at: new Date().toISOString() });
 
-  await redis(config, ["ZADD", LEADERBOARD_KEY, score, member]);
-  const rank = (await redis(config, ["ZREVRANK", LEADERBOARD_KEY, member])) + 1;
-  return res.status(200).json({ rank, score, top: await topEntries(config) });
+  await redis(client, ["ZADD", LEADERBOARD_KEY, score, member]);
+  const rank = (await redis(client, ["ZREVRANK", LEADERBOARD_KEY, member])) + 1;
+  return res.status(200).json({ rank, score, top: await topEntries(client) });
 }
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  const config = redisConfig();
-  if (!config) {
+  if (!redisUrl()) {
     return res.status(503).json({ error: "not_configured" });
   }
 
   try {
+    const client = await getClient();
     if (req.method === "GET") {
-      return res.status(200).json({ top: await topEntries(config) });
+      return res.status(200).json({ top: await topEntries(client) });
     }
     if (req.method === "POST") {
-      return await submit(config, req, res);
+      return await submit(client, req, res);
     }
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "method_not_allowed" });
