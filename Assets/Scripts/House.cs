@@ -27,7 +27,9 @@ public class House : MonoBehaviour
     public float nearHouseDistance = 1.5f; // 집에서 이 거리 안이면 문으로 들어갈 수 있다고 알려준다
     public float sleepFadeDuration = 0.5f;
     public float sleepDuration = 1.2f;
-    public string sleepMessage = "쿨쿨... 푹 자고 일어났더니 체력이 가득 찼어!";
+    public int sleepMinutes = 60;       // 자고 나면 게임 시계가 이만큼 지나 있다
+    public float sleepStaminaLimit = 70f; // 체력이 이보다 많으면 잠이 오지 않는다 (자마자 또 자는 것 방지)
+    public string sleepMessage = "쿨쿨... 한 시간 자고 일어났더니 체력이 가득 찼어!";
 
     private readonly List<Vector2Int> doorCells = new List<Vector2Int>();
     private Vector3 bedPosition;
@@ -68,12 +70,19 @@ public class House : MonoBehaviour
             roofFadeCoroutine = StartCoroutine(Fade(roofTilemaps[0].color.a, inside ? 0f : 1f, roofFadeDuration, SetRoofAlpha));
         }
 
-        if (CanSleep())
+        if (IsAtBed())
         {
-            InteractionHint.Show("Space 바를 누르면 침대에서 푹 쉴 수 있어!", 1);
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (playerStatus.stamina >= sleepStaminaLimit)
             {
-                StartCoroutine(Sleep());
+                InteractionHint.Show("아직 체력이 충분해서 잠이 안 와! 지치면 다시 와.", 1);
+            }
+            else
+            {
+                InteractionHint.Show("Space 바를 누르면 침대에서 푹 쉴 수 있어!", 1);
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    StartCoroutine(Sleep());
+                }
             }
         }
         else if (!isPlayerInside && IsNearHouse(player.transform.position))
@@ -191,7 +200,8 @@ public class House : MonoBehaviour
         }
     }
 
-    private bool CanSleep()
+    // 침대 앞에 서 있는지 (실제로 잠들 수 있는지는 체력도 본다)
+    private bool IsAtBed()
     {
         return hasBed && isPlayerInside && !isSleeping
             && !GameManager.instance.dialoguePanel.activeSelf
@@ -207,8 +217,9 @@ public class House : MonoBehaviour
         yield return StartCoroutine(Fade(0f, 1f, sleepFadeDuration, SetOverlayAlpha));
         sleepText.gameObject.SetActive(true);
         yield return new WaitForSeconds(sleepDuration);
-        // 깨어나는 순간 100%가 보이도록 화면이 밝아지기 직전에 채운다
+        // 깨어나는 순간 100%가 보이도록 화면이 밝아지기 직전에 채우고, 잔 만큼 시계를 앞으로 돌린다
         playerStatus.IncreaseStamina(playerStatus.maxStamina);
+        GameManager.instance.dayNightCycle.SkipMinutes(sleepMinutes);
         sleepText.gameObject.SetActive(false);
         yield return StartCoroutine(Fade(1f, 0f, sleepFadeDuration, SetOverlayAlpha));
 

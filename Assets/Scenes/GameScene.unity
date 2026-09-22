@@ -5217,7 +5217,6 @@ GameObject:
   - component: {fileID: 175265752}
   - component: {fileID: 175265755}
   - component: {fileID: 175265756}
-  - component: {fileID: 2100000046}
   m_Layer: 6
   m_Name: Fence
   m_TagString: Fence
@@ -5316,21 +5315,6 @@ TilemapRenderer:
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
   m_MaskInteraction: 0
---- !u!114 &2100000046
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 175265750}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc57d65cfd40c6030892451e4ab660f1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fenceTile: {fileID: 11400000, guid: 8b6c67c7be7d3904089880310901b2ef, type: 2}
-  grassRenderer: {fileID: 551131975}
-  baseHeight: 0.4375
 --- !u!1839735485 &175265754
 Tilemap:
   m_ObjectHideFlags: 0
@@ -41944,12 +41928,9 @@ MonoBehaviour:
   stumps:
   - {fileID: 11400000, guid: 13d6e7a0eb545a14186c51c8840ca98d, type: 2}
   - {fileID: 11400000, guid: 8093707b51022cf469531b18492b22d1, type: 2}
-  - {fileID: 11400000, guid: 3f676d8fd4c0b1e4b8a8ca7444ddf5d7, type: 2}
   bushes:
   - {fileID: 11400000, guid: 6fb8ac2e233cfde45be740d75656343c, type: 2}
   - {fileID: 11400000, guid: d7ee104e060ed3d499f72863fbbadc3b, type: 2}
-  - {fileID: 11400000, guid: 7cb0d1ab61e637f45a6fe01d9907fac5, type: 2}
-  - {fileID: 11400000, guid: 195f75fff46cf8c45b71779a2cab7e40, type: 2}
   flowers:
   - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
   - {fileID: 11400000, guid: 7cd033f47963464438ad95b819a8f72b, type: 2}
@@ -41959,11 +41940,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
   - {fileID: 11400000, guid: c60512acf2f80cb428beb1d406bbec62, type: 2}
   sunflower: {fileID: 11400000, guid: f5c12cc7e1fe22d42b77e1396ff194bb, type: 2}
-  dirt: {fileID: 11400000, guid: 38e62a4fe0dc3074fa8e889af8a7cc8a, type: 2}
+  baseGrass:
+  - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
+  - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
+  - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
+  - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
   rendererTemplate: {fileID: 175265753}
-  groundOrder: -9
   flowerOrder: 3
   objectOrder: 7
+  baseGrassOrder: 8
+  baseOffset: 0.2
 --- !u!1 &2100000061
 GameObject:
   m_ObjectHideFlags: 0
@@ -41975,7 +41961,7 @@ GameObject:
   - component: {fileID: 2100000062}
   - component: {fileID: 2100000063}
   m_Layer: 0
-  m_Name: GrassInFront
+  m_Name: BaseGrass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -42005,7 +41991,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2100000061}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 086809e68200dc49910a7fa92c019a7e, type: 3}
+  m_Script: {fileID: 11500000, guid: 80d38d8c3dc792a58b21331917783d5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   grassRenderers:
@@ -42014,16 +42000,22 @@ MonoBehaviour:
   - {fileID: 1995019677}
   - {fileID: 1778504142}
   fence: {fileID: 175265754}
-  characterOverlayOrder: 4
-  lowerBodyRatio: 0.4
+  fenceTile: {fileID: 11400000, guid: 8b6c67c7be7d3904089880310901b2ef, type: 2}
   tallRenderers:
   - {fileID: 771057601}
   - {fileID: 1290550102}
   - {fileID: 171668075}
   - {fileID: 1749784636}
   - {fileID: 2100000044}
-  tallOverlayOrder: 8
-  tallBaseHeight: 0.375
+  tiles:
+  - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
+  - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
+  - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
+  - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
+  sortingOrder: 8
+  baseOffset: 0.2
+  chance: 0.45
+  seed: 7
 --- !u!1 &2100000041
 GameObject:
   m_ObjectHideFlags: 0

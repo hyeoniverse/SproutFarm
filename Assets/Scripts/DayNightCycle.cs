@@ -24,7 +24,6 @@ public class DayNightCycle : MonoBehaviour
     private PlayerStatus playerStatus;
 
     private float playerSpeed = 0f;
-    private float continuousMovementTime = 0f;
 
     private void Awake()
     {
@@ -87,22 +86,43 @@ public class DayNightCycle : MonoBehaviour
 
     private void UpdateGameTime()
     {
-        currentMinute++;
-        if (currentMinute >= minutesPerHour)
-        {
-            currentMinute = 0;
-            currentHour++;
-            if (currentHour >= hoursPerDay)
-            {
-                currentHour = 0;
-                currentDay++;
-
-                GameResult.Finish(AllAnimalsCaptured());
-                SceneManager.LoadScene("ClearScene", LoadSceneMode.Single);
-            }
-        }
+        if (AdvanceMinute())
+            return;
 
         DecreasePlayerStamina();
+    }
+
+    // 시계를 1분 앞으로 돌린다. 자정이 되면 하루가 끝나 결과 화면으로 넘어간다.
+    private bool AdvanceMinute()
+    {
+        currentMinute++;
+        if (currentMinute < minutesPerHour)
+            return false;
+
+        currentMinute = 0;
+        currentHour++;
+        if (currentHour < hoursPerDay)
+            return false;
+
+        currentHour = 0;
+        currentDay++;
+        GameResult.Finish(AllAnimalsCaptured());
+        SceneManager.LoadScene("ClearScene", LoadSceneMode.Single);
+        return true;
+    }
+
+    // 침대에서 자는 동안 시계를 앞으로 돌린다 (체력을 채우는 대신 시간을 쓴다)
+    public void SkipMinutes(int minutes)
+    {
+        for (int i = 0; i < minutes; i++)
+        {
+            if (AdvanceMinute())
+                return;
+        }
+
+        timer = 0f;
+        DisplayTime();
+        UpdateLighting();
     }
 
     private void DisplayTime()
@@ -123,20 +143,11 @@ public class DayNightCycle : MonoBehaviour
     {
         if (playerStatus != null)
         {
+            // playerSpeed는 Player가 넘겨주는 배율 (걷기 1배, 달리기·피로가 쌓이면 그만큼 커진다)
             float baseStaminaDecreaseRate = 100f / (hoursToExhaustion * minutesPerHour); // 걸을 때 게임 1분마다 닳는 양
-            float adjustedStaminaDecreaseRate = baseStaminaDecreaseRate * (playerSpeed);
-
-            if (playerSpeed != 0f)
-            {
-                continuousMovementTime += Time.deltaTime;
-                adjustedStaminaDecreaseRate *= 1 + (continuousMovementTime / 60f);
-                playerStatus.DecreaseStamina(adjustedStaminaDecreaseRate);
-            }
-            else
-            {
-                continuousMovementTime = 0f;
-                playerStatus.DecreaseStamina(baseStaminaDecreaseRate * idleDrainRatio);
-            }
+            playerStatus.DecreaseStamina(playerSpeed != 0f
+                ? baseStaminaDecreaseRate * playerSpeed
+                : baseStaminaDecreaseRate * idleDrainRatio);
         }
     }
 

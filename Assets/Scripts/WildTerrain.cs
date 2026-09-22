@@ -22,17 +22,18 @@ public class WildTerrain : MonoBehaviour
     public TileBase[] bushes;
     public TileBase[] flowers;    // 꽃, 새싹
     public TileBase sunflower;
-    public TileBase dirt;         // 흙 (규칙 타일)
+    public TileBase[] baseGrass;  // 나무·해바라기 밑둥에 깔 작은 풀
 
     [Header("그리는 순서")]
     public TilemapRenderer rendererTemplate; // 재질·정렬 레이어를 가져올 타일맵
-    public int groundOrder = -9;             // 땅 위, 울타리 아래
     public int flowerOrder = 3;              // 캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
     public int objectOrder = 7;              // 나무와 같은 층 (캐릭터보다 위)
+    public int baseGrassOrder = 8;           // 나무 밑둥에 깔리는 풀 (나무보다 위)
+    public float baseOffset = 0.2f;
 
     private enum Theme { Woods, Rocky, Meadow, Orchard, Clearing }
 
-    private Tilemap groundMap;
+    private Tilemap baseGrassMap;
     private Tilemap flowerMap;
     private Tilemap objectMap;
     private readonly HashSet<Vector2Int> builtChunks = new HashSet<Vector2Int>();
@@ -46,9 +47,9 @@ public class WildTerrain : MonoBehaviour
         {
             player = GameManager.instance.player.transform;
         }
-        groundMap = CreateTilemap("Wild Ground", groundOrder, TilemapRenderer.Mode.Chunk, false);
         flowerMap = CreateTilemap("Wild Flowers", flowerOrder, TilemapRenderer.Mode.Individual, false);
         objectMap = CreateTilemap("Wild Objects", objectOrder, TilemapRenderer.Mode.Chunk, true);
+        baseGrassMap = CreateTilemap("Wild Base Grass", baseGrassOrder, TilemapRenderer.Mode.Chunk, false);
     }
 
     private void Update()
@@ -127,9 +128,9 @@ public class WildTerrain : MonoBehaviour
     {
         foreach (Vector3Int cell in CellsOf(chunk))
         {
-            groundMap.SetTile(cell, null);
             flowerMap.SetTile(cell, null);
             objectMap.SetTile(cell, null);
+            baseGrassMap.SetTile(cell, null);
         }
         RescanPaths(chunk);
     }
@@ -157,24 +158,19 @@ public class WildTerrain : MonoBehaviour
         {
             tilemap.SetTile(cell, tile);
             taken.Add(cell);
+            // 나무·해바라기는 밑둥 자리에 작은 풀을 깔아, 밑둥 쪽만 풀이 앞에 보이게 한다
+            if (tilemap == objectMap && random.NextDouble() < 0.7)
+            {
+                BaseGrass.PlaceAtBase(baseGrassMap, objectMap, cell, baseGrass[random.Next(baseGrass.Length)], baseOffset);
+            }
         }
 
         TileBase Pick(TileBase[] tiles) => tiles[random.Next(tiles.Length)];
-
-        // 흙 빈터는 구역 가운데에 둥글게 깔아 둔다
-        Vector2 dirtCenter = new Vector2(chunk.x * chunkSize + chunkSize / 2f, chunk.y * chunkSize + chunkSize / 2f);
-        float dirtRadius = theme == Theme.Clearing ? 3f + (float)random.NextDouble() * 2f : 0f;
 
         foreach (Vector3Int cell in CellsOf(chunk))
         {
             if (homeArea.Contains(new Vector2Int(cell.x, cell.y)))
                 continue;
-
-            if (dirtRadius > 0f && Vector2.Distance(new Vector2(cell.x + 0.5f, cell.y + 0.5f), dirtCenter) < dirtRadius)
-            {
-                groundMap.SetTile(cell, dirt);
-                continue;
-            }
 
             double roll = random.NextDouble();
             switch (theme)
