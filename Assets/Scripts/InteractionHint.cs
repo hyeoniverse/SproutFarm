@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 // 침대·집·울타리 근처에서 무엇을 할 수 있는지 알려주는 안내 문구.
 // 대화창 UI를 복제해 같은 모습으로 띄우되, 대화와 달리 시간을 멈추거나 Space 바를 가로채지 않고
@@ -78,7 +79,7 @@ public class InteractionHint : MonoBehaviour
         requestedMessage = null;
     }
 
-    // 대화창을 복제하고, 타자 효과·타자 소리·넘기기 화살표를 떼어 안내 전용으로 만든다
+    // 대화창을 복제하고, 타자 효과·타자 소리·넘기기 화살표·버튼(튜토리얼 건너뛰기)을 떼어 안내 전용으로 만든다
     private void BuildHintDialogue()
     {
         // 복제본의 Awake/OnEnable(소리 재생 등)이 돌기 전에 손보려고 비활성 부모 아래에 만든다
@@ -94,6 +95,10 @@ public class InteractionHint : MonoBehaviour
         foreach (AudioSource audioSource in panel.GetComponentsInChildren<AudioSource>(true))
         {
             DestroyImmediate(audioSource);
+        }
+        foreach (Button button in panel.GetComponentsInChildren<Button>(true))
+        {
+            DestroyImmediate(button.gameObject);
         }
         Transform cursor = panel.transform.Find("Cusor");
         if (cursor != null)

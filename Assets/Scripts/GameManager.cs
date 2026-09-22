@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     public GameObject scanObject;
     public bool isAction;
     private bool isInitialDialogue = true;
+    private bool animalsReleased;
     public DayNightCycle dayNightCycle;
     public AudioClip greetingSound;
     private AudioSource greetingAudioSource;
@@ -154,10 +155,26 @@ public class GameManager : MonoBehaviour
         currentDialogueIndex++;
     }
 
+    // 처음 튜토리얼 대화를 건너뛴다. 동물들이 도망치는 대사 전이면 바로 풀어 준다.
+    public void SkipInitialDialogue()
+    {
+        if (!isInitialDialogue)
+            return;
+
+        if (!animalsReleased)
+        {
+            ReleaseAnimals();
+        }
+        dialoguePanel.SetActive(false);
+        currentDialogueIndex = 0;
+        isInitialDialogue = false;
+    }
+
     // 울타리 안의 동물들을 맵 곳곳으로 흩어지게 풀어놓는다. 둘레를 동물 수만큼 고르게 나눠
     // 저마다 다른 방향으로 멀리 달아나게 해서, 처음에 한곳에서 한꺼번에 잡히지 않게 한다.
     private void ReleaseAnimals()
     {
+        animalsReleased = true;
         List<Animal> animals = new List<Animal>();
         foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
         {

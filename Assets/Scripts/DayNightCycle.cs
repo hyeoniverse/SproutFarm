@@ -9,7 +9,7 @@ public class DayNightCycle : MonoBehaviour
     public int hoursPerDay = 24;
     public int minutesPerHour = 60;
     public float realSecondsPerGameMinute = 1f;
-    public float hoursToExhaustion = 2f; // 쉬지 않고 걸으면 이 게임 시간이 지나 체력이 바닥난다
+    public float hoursToExhaustion = 3f; // 쉬지 않고 걸으면 이 게임 시간이 지나 체력이 바닥난다
     public float idleDrainRatio = 0.5f;  // 가만히 있을 때는 걸을 때의 이 비율만큼만 닳는다
 
     public TMP_Text timeText;

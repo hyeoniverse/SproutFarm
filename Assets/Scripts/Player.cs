@@ -41,7 +41,7 @@ public class Player : MonoBehaviour
     // 체력이 이 값 이하로 떨어지면 화살표가 동물 대신 쉴 곳(집)을 가리킴
     public float lowStaminaThreshold = 30f;
     // 달릴 때는 걸을 때보다 이 배율만큼 체력이 더 빨리 닳음
-    public float runDrainMultiplier = 2f;
+    public float runDrainMultiplier = 3f;
     // 쉬지 않고 움직일수록 체력이 점점 더 빨리 닳음: 계속 움직인 시간이 fatigueRampSeconds가 되면 maxFatigueMultiplier배
     public float fatigueRampSeconds = 60f;
     public float maxFatigueMultiplier = 2f;
