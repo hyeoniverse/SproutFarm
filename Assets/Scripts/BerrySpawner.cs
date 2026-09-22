@@ -91,7 +91,7 @@ public class BerrySpawner : MonoBehaviour
         SpriteRenderer spriteRenderer = berryObject.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = berrySprite;
         spriteRenderer.sharedMaterial = spriteMaterial;
-        spriteRenderer.sortingOrder = 5; // 꽃·새싹(4) 위, 지붕(6) 아래
+        spriteRenderer.sortingOrder = -4; // 밭 새싹·꽃·울타리 위, 플레이어 아래
 
         CircleCollider2D trigger = berryObject.AddComponent<CircleCollider2D>();
         trigger.isTrigger = true;
