@@ -1,20 +1,18 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-// 침대·집·울타리 근처에서 무엇을 할 수 있는지 화면 아래에 알려주는 안내 문구.
-// Show()를 부른 프레임에만 보이므로, 조건이 맞는 동안 매 프레임 부르면 된다.
-// 한 프레임에 여러 곳에서 부르면 priority가 높은 문구가 보인다.
+// 침대·집·울타리 근처에서 무엇을 할 수 있는지 알려주는 안내 문구.
+// 대화창 UI를 복제해 같은 모습으로 띄우되, 대화와 달리 시간을 멈추거나 Space 바를 가로채지 않고
+// Show()를 부른 프레임에만 보인다. 한 프레임에 여러 곳에서 부르면 priority가 높은 문구가 보인다.
 public class InteractionHint : MonoBehaviour
 {
-    public Sprite backgroundSprite; // 대화창 글상자와 같은 크림색 상자 (9분할)
-    public Color textColor = new Color(0.392f, 0.25f, 0.25f, 1f); // HUD 글자와 같은 갈색
-    public float fontSize = 48f;
+    public string portraitTrigger = "Blinking"; // 안내가 뜰 때 대화창 얼굴 표정
 
     private static InteractionHint instance;
 
     private GameObject panel;
     private TMP_Text hintText;
+    private Animator portrait;
     private string requestedMessage;
     private int requestedPriority;
     private string flashMessage;
@@ -49,8 +47,8 @@ public class InteractionHint : MonoBehaviour
 
     private void Start()
     {
-        // 대화창 글꼴을 쓰므로 GameManager가 준비된 뒤에 만든다
-        BuildUI();
+        // GameManager가 대화창을 들고 있으므로 준비된 뒤에 만든다
+        BuildHintDialogue();
     }
 
     private void LateUpdate()
@@ -58,61 +56,56 @@ public class InteractionHint : MonoBehaviour
         if (panel == null)
             return;
 
-        // 대화창이 떠 있을 때는 겹치지 않도록 숨긴다
+        // 진짜 대화가 떠 있을 때는 겹치지 않도록 숨긴다
         string message = Time.time < flashUntil ? flashMessage : requestedMessage;
         bool visible = message != null && !GameManager.instance.dialoguePanel.activeSelf;
-        panel.SetActive(visible);
         if (visible)
         {
+            if (!panel.activeSelf)
+            {
+                panel.SetActive(true);
+                if (portrait != null)
+                {
+                    portrait.SetTrigger(portraitTrigger);
+                }
+            }
             hintText.text = message;
+        }
+        else
+        {
+            panel.SetActive(false);
         }
         requestedMessage = null;
     }
 
-    private void BuildUI()
+    // 대화창을 복제하고, 타자 효과·타자 소리·넘기기 화살표를 떼어 안내 전용으로 만든다
+    private void BuildHintDialogue()
     {
-        Canvas canvas = gameObject.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 50;
-        // 다른 UI와 같은 기준 해상도로 맞춰 화면 크기에 따라 함께 커지고 작아지게 한다
-        CanvasScaler scaler = gameObject.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(2778f, 1284f);
-        scaler.matchWidthOrHeight = 0.5f;
+        // 복제본의 Awake/OnEnable(소리 재생 등)이 돌기 전에 손보려고 비활성 부모 아래에 만든다
+        GameObject holder = new GameObject("HintDialogueHolder");
+        holder.SetActive(false);
+        panel = Instantiate(GameManager.instance.dialoguePanel, holder.transform);
+        panel.name = "HintDialogue";
 
-        // HUD 상자들과 같은 비율(스프라이트 1px = 6.25)로 9분할해 높이 300, 너비는 글자에 맞춘다
-        panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
-        panel.transform.SetParent(transform, false);
-        RectTransform panelRect = panel.GetComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0.5f, 0f);
-        panelRect.anchorMax = new Vector2(0.5f, 0f);
-        panelRect.pivot = new Vector2(0.5f, 0f);
-        panelRect.anchoredPosition = new Vector2(0f, 160f); // 오른쪽 아래 동물 수 표시보다 위
-        panelRect.sizeDelta = new Vector2(0f, 300f);
-        Image background = panel.GetComponent<Image>();
-        background.sprite = backgroundSprite;
-        background.type = Image.Type.Sliced;
-        background.raycastTarget = false;
-        HorizontalLayoutGroup layout = panel.GetComponent<HorizontalLayoutGroup>();
-        layout.padding = new RectOffset(110, 90, 75, 69); // 상자 테두리(10/6/12/11px) 안쪽에 글자가 오도록
-        layout.childAlignment = TextAnchor.MiddleCenter;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = false;
-        layout.childForceExpandHeight = true;
-        ContentSizeFitter fitter = panel.GetComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+        foreach (TypeEffect typeEffect in panel.GetComponentsInChildren<TypeEffect>(true))
+        {
+            DestroyImmediate(typeEffect);
+        }
+        foreach (AudioSource audioSource in panel.GetComponentsInChildren<AudioSource>(true))
+        {
+            DestroyImmediate(audioSource);
+        }
+        Transform cursor = panel.transform.Find("Cusor");
+        if (cursor != null)
+        {
+            cursor.gameObject.SetActive(false);
+        }
+        Transform emoji = panel.transform.Find("Emoji");
+        portrait = emoji != null ? emoji.GetComponent<Animator>() : null;
+        hintText = panel.GetComponentInChildren<TMP_Text>(true);
 
-        GameObject textObject = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(panel.transform, false);
-        hintText = textObject.GetComponent<TextMeshProUGUI>();
-        hintText.font = GameManager.instance.dialogueText.font;
-        hintText.fontSize = fontSize;
-        hintText.alignment = TextAlignmentOptions.Center;
-        hintText.textWrappingMode = TextWrappingModes.NoWrap;
-        hintText.color = textColor;
-        hintText.raycastTarget = false;
         panel.SetActive(false);
+        panel.transform.SetParent(transform, false);
+        Destroy(holder);
     }
 }

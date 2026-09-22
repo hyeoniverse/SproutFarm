@@ -43,6 +43,8 @@ public class Player : MonoBehaviour
     // 울타리(동물 우리)가 차지하는 곳과, 동물을 넣을 수 있는 거리
     public Rect penArea = new Rect(0f, 0f, 12f, 7f);
     public float fenceReach = 1.2f;
+    // 대화를 Space 바로 닫은 바로 그 프레임의 입력이 울타리 판정에 쓰이지 않도록 지난 프레임 상태를 기억
+    private bool dialogueOpenLastFrame;
     // 침대에서 쉬는 동안에는 움직이지 않음
     public bool isResting;
     private House house;
@@ -190,7 +192,10 @@ public class Player : MonoBehaviour
     // (키 입력은 FixedUpdate가 돌지 않는 프레임에 놓칠 수 있어서 Update에서 처리)
     private void HandleCaptureInput()
     {
-        if (!IsNearFence() || gameManager.IsInitialDialogue() || gameManager.dialoguePanel.activeSelf)
+        bool dialogueOpen = gameManager.dialoguePanel.activeSelf;
+        bool dialogueJustOpenOrClosed = dialogueOpen || dialogueOpenLastFrame;
+        dialogueOpenLastFrame = dialogueOpen;
+        if (!IsNearFence() || gameManager.IsInitialDialogue() || dialogueJustOpenOrClosed)
             return;
 
         InteractionHint.Show("Space 바를 누르면 데려온 동물을 울타리에 넣을 수 있어!", 1);
