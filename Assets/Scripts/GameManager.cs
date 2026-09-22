@@ -34,6 +34,8 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
+        GameResult.Reset();
+        WebBridge.CaptureKeyboard();
         greetingAudioSource = gameObject.AddComponent<AudioSource>();
     }
 
@@ -51,7 +53,7 @@ public class GameManager : MonoBehaviour
 
         if (!isInitialDialogue && AllAnimalsCaptured())
         {
-            PlayerPrefs.SetInt("IsVictory", 0);
+            GameResult.Finish(true);
             SceneManager.LoadScene("ClearScene", LoadSceneMode.Single);
         }
     }

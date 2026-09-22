@@ -17,11 +17,14 @@ public class Animal : MonoBehaviour
     public float followDistance = 2.0f;
     public float fleeDistance = 3.0f;
     public float randomMoveRadius = 5.0f;
-    public float activationRadius = 5.0f; // ¿Àµğ¿À È°¼ºÈ­ ¹İ°æ
-    public float maxVolume = 1.0f; // ÃÖ´ë º¼·ı
-    public float minVolume = 0.1f; // ÃÖ¼Ò º¼·ı
-    public AudioClip capturedSound; // µ¿¹°ÀÌ ÀâÇûÀ» ¶§ È¿°úÀ½
-    public AudioClip capturedInSound; // ¿ïÅ¸¸® ¾ÈÀ¸·Î µé¾î°¥ ¶§ È¿°úÀ½
+    public int characterSortingOrder = 3; // í”Œë ˆì´ì–´ SpriteRendererì™€ ê°™ì€ ê°’
+    public float catchUpSpeedMultiplier = 2f; // ë”°ë¼ì˜¤ë‹¤ í™”ë©´ ë°–ìœ¼ë¡œ ë²—ì–´ë‚˜ë©´ ì´ ë°°ìœ¨ë¡œ ë¹¨ë¦¬ ë”°ë¼ì˜¨ë‹¤
+    public float offScreenWarpDelay = 4f;     // ê·¸ë˜ë„ ì´ ì‹œê°„ ë„˜ê²Œ í™”ë©´ ë°–ì´ë©´ í™”ë©´ ê°€ì¥ìë¦¬ ë°”ë¡œ ë°”ê¹¥ìœ¼ë¡œ ì˜®ê¸´ë‹¤
+    public float activationRadius = 5.0f; // ì˜¤ë””ì˜¤ í™œì„±í™” ë°˜ê²½
+    public float maxVolume = 1.0f; // ìµœëŒ€ ë³¼ë¥¨
+    public float minVolume = 0.1f; // ìµœì†Œ ë³¼ë¥¨
+    public AudioClip capturedSound; // ë™ë¬¼ì´ ì¡í˜”ì„ ë•Œ íš¨ê³¼ìŒ
+    public AudioClip capturedInSound; // ìš¸íƒ€ë¦¬ ì•ˆìœ¼ë¡œ ë“¤ì–´ê°ˆ ë•Œ íš¨ê³¼ìŒ
     public AudioClip escapingSound;
     public AudioClip surprisedSound;
 
@@ -32,9 +35,9 @@ public class Animal : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Animator animator;
     private AIDestinationSetter destinationSetter;
-    private AudioSource mainAudioSource; // ±âÁ¸ AudioSource
-    private AudioSource capturedAudioSource; // capturedSound Àç»ı¿ë AudioSource
-    private AudioSource capturedInAudioSource; // capturedInSound Àç»ı¿ë AudioSource
+    private AudioSource mainAudioSource; // ê¸°ì¡´ AudioSource
+    private AudioSource capturedAudioSource; // capturedSound ì¬ìƒìš© AudioSource
+    private AudioSource capturedInAudioSource; // capturedInSound ì¬ìƒìš© AudioSource
     private AudioSource escapingSoundAudioSource;
     private AudioSource surprisedSoundAudioSource;
 
@@ -43,10 +46,13 @@ public class Animal : MonoBehaviour
 
     private Vector2 escapeTarget;
 
-    private static int animalCount = 0;
 
     private Transform playerTransform;
     private TilemapCollider2D[] fenceColliders;
+    private float offScreenTime;
+    private House house;
+    private ContactFilter2D solidOnly; // íŠ¸ë¦¬ê±°ëŠ” ë¹¼ê³  ì‹¤ì œë¡œ ë§‰íˆëŠ” ì¶©ëŒì²´ë§Œ ê²€ì‚¬
+    private readonly Collider2D[] overlapResults = new Collider2D[1];
 
     void Awake()
     {
@@ -64,6 +70,8 @@ public class Animal : MonoBehaviour
 
         FindPlayerTransform();
         FindFenceColliders();
+        house = FindAnyObjectByType<House>();
+        solidOnly.useTriggers = false;
         StartCoroutine(RandomMovement());
     }
 
@@ -71,7 +79,7 @@ public class Animal : MonoBehaviour
     {
         HandleMovement();
         HandleAnimation();
-        CheckPlayerDistance(); // ÇÃ·¹ÀÌ¾î¿ÍÀÇ °Å¸® Ã¼Å©
+        CheckPlayerDistance(); // í”Œë ˆì´ì–´ì™€ì˜ ê±°ë¦¬ ì²´í¬
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -95,9 +103,9 @@ public class Animal : MonoBehaviour
         seeker = GetComponent<Seeker>();
         aiPath = GetComponent<AIPath>();
         destinationSetter = GetComponent<AIDestinationSetter>();
-        mainAudioSource = GetComponent<AudioSource>(); // ±âÁ¸ AudioSource ÃÊ±âÈ­
+        mainAudioSource = GetComponent<AudioSource>(); // ê¸°ì¡´ AudioSource ì´ˆê¸°í™”
 
-        // È¿°úÀ½ Àç»ı¿ë AudioSource Ãß°¡ ¹× ÃÊ±âÈ­
+        // íš¨ê³¼ìŒ ì¬ìƒìš© AudioSource ì¶”ê°€ ë° ì´ˆê¸°í™”
         capturedAudioSource = gameObject.AddComponent<AudioSource>();
         capturedAudioSource.playOnAwake = false;
 
@@ -111,19 +119,11 @@ public class Animal : MonoBehaviour
         surprisedSoundAudioSource.playOnAwake = false;
     }
 
+    // í”Œë ˆì´ì–´Â·ë‚˜ë¬´Â·ìš¸íƒ€ë¦¬ì™€ ê°™ì€ ìˆœì„œì— ë‘ê³ , í™”ë©´ ì•„ë˜ìª½ì— ìˆëŠ” ê²ƒì´ ì•ì— ê·¸ë ¤ì§€ê²Œ í•œë‹¤
+    // (Renderer2Dì˜ íˆ¬ëª… ì •ë ¬ ì¶•ì´ Yì¶•ì´ë¼ ê°™ì€ ìˆœì„œë¼ë¦¬ëŠ” y ìœ„ì¹˜ë¡œ ì•ë’¤ê°€ ì •í•´ì§„ë‹¤)
     private void SetSortingOrder()
     {
-        animalCount++;
-        spriteRenderer.sortingOrder = 1000 + animalCount;
-
-        foreach (GameObject obj in FindObjectsOfType<GameObject>())
-        {
-            SpriteRenderer objSpriteRenderer = obj.GetComponent<SpriteRenderer>();
-            if (objSpriteRenderer != null && obj != gameObject && objSpriteRenderer.sortingOrder >= spriteRenderer.sortingOrder)
-            {
-                objSpriteRenderer.sortingOrder -= 1;
-            }
-        }
+        spriteRenderer.sortingOrder = characterSortingOrder;
     }
 
     private void FindPlayerTransform()
@@ -135,7 +135,7 @@ public class Animal : MonoBehaviour
         }
         else
         {
-            Debug.LogError("Player °´Ã¼°¡ ¾À¿¡ ¾ø½À´Ï´Ù. Player ÅÂ±×°¡ ¿Ã¹Ù¸£°Ô ¼³Á¤µÇ¾ú´ÂÁö È®ÀÎÇÏ¼¼¿ä.");
+            Debug.LogError("Player ê°ì²´ê°€ ì”¬ì— ì—†ìŠµë‹ˆë‹¤. Player íƒœê·¸ê°€ ì˜¬ë°”ë¥´ê²Œ ì„¤ì •ë˜ì—ˆëŠ”ì§€ í™•ì¸í•˜ì„¸ìš”.");
         }
     }
 
@@ -154,8 +154,8 @@ public class Animal : MonoBehaviour
         if (isFollowing)
         {
             aiPath.canMove = true;
-            aiPath.maxSpeed = GameManager.instance.player.baseSpeed;
             destinationSetter.target = playerTransform;
+            KeepNearScreen();
         }
         else if (!isCaptured && Vector2.Distance(transform.position, playerTransform.position) <= fleeDistance)
         {
@@ -163,11 +163,45 @@ public class Animal : MonoBehaviour
         }
     }
 
+    // ë”°ë¼ì˜¤ëŠ” ë™ë¬¼ì´ í™”ë©´ ë°–ì— ì˜¤ë˜ ë¨¸ë¬¼ì§€ ì•Šê²Œ í•œë‹¤: ë²—ì–´ë‚˜ë©´ ë¹¨ë¦¬ ë”°ë¼ì˜¤ê³ ,
+    // ê·¸ë˜ë„ ì˜¤ë˜ ê±¸ë¦¬ë©´ ê°™ì€ ë°©í–¥ì˜ í™”ë©´ ê°€ì¥ìë¦¬ ë°”ë¡œ ë°”ê¹¥ìœ¼ë¡œ ì˜®ê²¨ ê±¸ì–´ ë“¤ì–´ì˜¤ëŠ” ëª¨ìŠµë§Œ ë³´ì´ê²Œ í•œë‹¤.
+    private void KeepNearScreen()
+    {
+        float followSpeed = GameManager.instance.player.baseSpeed;
+        Camera mainCamera = Camera.main;
+        Vector3 viewport = mainCamera.WorldToViewportPoint(transform.position);
+        bool offScreen = viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f;
+        if (!offScreen)
+        {
+            offScreenTime = 0f;
+            aiPath.maxSpeed = followSpeed;
+            return;
+        }
+
+        aiPath.maxSpeed = followSpeed * catchUpSpeedMultiplier;
+        offScreenTime += Time.deltaTime;
+        if (offScreenTime < offScreenWarpDelay)
+            return;
+
+        Vector3 edge = new Vector3(Mathf.Clamp(viewport.x, -0.05f, 1.05f), Mathf.Clamp(viewport.y, -0.05f, 1.05f), viewport.z);
+        Vector3 target = mainCamera.ViewportToWorldPoint(edge);
+        target.z = transform.position.z;
+
+        // ë‚˜ë¬´ë‚˜ ìš¸íƒ€ë¦¬ ì†, ì§€ë¶• ì•„ë˜ì—ëŠ” ë‘ì§€ ì•ŠëŠ”ë‹¤ (ë§‰íˆë©´ ë‹¤ìŒ í”„ë ˆì„ì— ë‹¤ì‹œ ì‹œë„)
+        bool blocked = Physics2D.OverlapCircle(target, 0.4f, solidOnly, overlapResults) > 0
+            || (house != null && house.IsUnderRoof(target));
+        if (!blocked)
+        {
+            aiPath.Teleport(target);
+            offScreenTime = 0f;
+        }
+    }
+
     private void HandleAnimation()
     {
-        // µ¿¹°Àº ¹°¸® ¾÷µ¥ÀÌÆ®¿¡¼­¸¸ ¿òÁ÷¿©¼­, À§Ä¡ ºñ±³·Î ÆÇ´ÜÇÏ¸é ¹°¸® ¾÷µ¥ÀÌÆ®°¡ ¾ø´Â ÇÁ·¹ÀÓ¸¶´Ù
-        // ¸ØÃá °ÍÀ¸·Î º¸¿© ´Ş¸®±â/´ë±â ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ¹ø°¥¾Æ ±ôºı¿´´Ù. AIPath°¡ °è»êÇÑ ¼Óµµ·Î ÆÇ´ÜÇÏ°í,
-        // ¾ÆÁÖ ÀÛÀº ÁÂ¿ì Èçµé¸²¿¡´Â ¹æÇâÀ» µÚÁıÁö ¾Ê´Â´Ù.
+        // ë™ë¬¼ì€ ë¬¼ë¦¬ ì—…ë°ì´íŠ¸ì—ì„œë§Œ ì›€ì§ì—¬ì„œ, ìœ„ì¹˜ ë¹„êµë¡œ íŒë‹¨í•˜ë©´ ë¬¼ë¦¬ ì—…ë°ì´íŠ¸ê°€ ì—†ëŠ” í”„ë ˆì„ë§ˆë‹¤
+        // ë©ˆì¶˜ ê²ƒìœ¼ë¡œ ë³´ì—¬ ë‹¬ë¦¬ê¸°/ëŒ€ê¸° ì• ë‹ˆë©”ì´ì…˜ì´ ë²ˆê°ˆì•„ ê¹œë¹¡ì˜€ë‹¤. AIPathê°€ ê³„ì‚°í•œ ì†ë„ë¡œ íŒë‹¨í•˜ê³ ,
+        // ì•„ì£¼ ì‘ì€ ì¢Œìš° í”ë“¤ë¦¼ì—ëŠ” ë°©í–¥ì„ ë’¤ì§‘ì§€ ì•ŠëŠ”ë‹¤.
         Vector2 velocity = aiPath.velocity;
         animator.SetBool("isRunning", velocity.sqrMagnitude > 0.01f);
         if (Mathf.Abs(velocity.x) > 0.1f)
@@ -199,7 +233,7 @@ public class Animal : MonoBehaviour
                 mainAudioSource.Play();
             }
 
-            // °Å¸® ºñ·ÊÇÏ¿© º¼·ı Á¶Àı
+            // ê±°ë¦¬ ë¹„ë¡€í•˜ì—¬ ë³¼ë¥¨ ì¡°ì ˆ
             float volume = Mathf.Lerp(maxVolume, minVolume, distanceToPlayer / activationRadius);
             mainAudioSource.volume = volume;
         }
@@ -224,7 +258,7 @@ public class Animal : MonoBehaviour
             aiPath.endReachedDistance = followDistance;
             StopCoroutine(RandomMovement());
 
-            // È¿°úÀ½ Àç»ı
+            // íš¨ê³¼ìŒ ì¬ìƒ
             if (capturedSound != null)
             {
                 capturedAudioSource.PlayOneShot(capturedSound);
@@ -255,7 +289,7 @@ public class Animal : MonoBehaviour
         aiPath.canMove = true;
         destinationSetter.target = null;
 
-        // Å»Ãâ ½Ã È¿°úÀ½ Àç»ı
+        // íƒˆì¶œ ì‹œ íš¨ê³¼ìŒ ì¬ìƒ
         if (escapingSound != null && surprisedSound != null)
         {
             surprisedSoundAudioSource.PlayOneShot(surprisedSound);
@@ -304,11 +338,11 @@ public class Animal : MonoBehaviour
     {
         StopFollowingPlayer();
         isCaptured = true;
-        transform.position = position; // À§Ä¡¸¦ Áï½Ã º¯°æ
+        transform.position = position; // ìœ„ì¹˜ë¥¼ ì¦‰ì‹œ ë³€ê²½
         aiPath.canMove = false;
         destinationSetter.target = null;
 
-        // ¿ïÅ¸¸® ¾ÈÀ¸·Î µé¾î°¥ ¶§ È¿°úÀ½ Àç»ı
+        // ìš¸íƒ€ë¦¬ ì•ˆìœ¼ë¡œ ë“¤ì–´ê°ˆ ë•Œ íš¨ê³¼ìŒ ì¬ìƒ
         if (capturedInSound != null)
         {
             capturedInAudioSource.PlayOneShot(capturedInSound);

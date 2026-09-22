@@ -9,6 +9,8 @@ public class DayNightCycle : MonoBehaviour
     public int hoursPerDay = 24;
     public int minutesPerHour = 60;
     public float realSecondsPerGameMinute = 1f;
+    public float hoursToExhaustion = 4f; // 쉬지 않고 걸으면 이 게임 시간이 지나 체력이 바닥난다
+    public float idleDrainRatio = 0.5f;  // 가만히 있을 때는 걸을 때의 이 비율만큼만 닳는다
 
     public TMP_Text timeText;
     public TMP_Text dayText;
@@ -95,11 +97,7 @@ public class DayNightCycle : MonoBehaviour
                 currentHour = 0;
                 currentDay++;
 
-                if (AllAnimalsCaptured())
-                    PlayerPrefs.SetInt("IsVictory", 0);
-                else
-                    PlayerPrefs.SetInt("IsVictory", 1);
-
+                GameResult.Finish(AllAnimalsCaptured());
                 SceneManager.LoadScene("ClearScene", LoadSceneMode.Single);
             }
         }
@@ -125,7 +123,7 @@ public class DayNightCycle : MonoBehaviour
     {
         if (playerStatus != null)
         {
-            float baseStaminaDecreaseRate = 100f / (9f * 60f) * (60f / minutesPerHour); // ?? ???��?? ???? ???
+            float baseStaminaDecreaseRate = 100f / (hoursToExhaustion * minutesPerHour); // 걸을 때 게임 1분마다 닳는 양
             float adjustedStaminaDecreaseRate = baseStaminaDecreaseRate * (playerSpeed);
 
             if (playerSpeed != 0f)
@@ -137,7 +135,7 @@ public class DayNightCycle : MonoBehaviour
             else
             {
                 continuousMovementTime = 0f;
-                playerStatus.DecreaseStamina(baseStaminaDecreaseRate);
+                playerStatus.DecreaseStamina(baseStaminaDecreaseRate * idleDrainRatio);
             }
         }
     }
@@ -150,6 +148,13 @@ public class DayNightCycle : MonoBehaviour
     public int GetCurrentDay() => currentDay;
     public int GetCurrentHour() => currentHour;
     public int GetCurrentMinute() => currentMinute;
+
+    // 자정까지 남은 게임 시간(1시간 = 60분 기준, 랭킹 점수용)
+    public int GetRemainingMinutes()
+    {
+        int remaining = hoursPerDay * minutesPerHour - (currentHour * minutesPerHour + currentMinute);
+        return remaining * 60 / minutesPerHour;
+    }
 
     public bool IsDayOver()
     {

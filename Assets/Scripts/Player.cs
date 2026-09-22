@@ -40,6 +40,9 @@ public class Player : MonoBehaviour
 
     // 체력이 이 값 이하로 떨어지면 화살표가 동물 대신 쉴 곳(집)을 가리킴
     public float lowStaminaThreshold = 30f;
+    // 울타리(동물 우리)가 차지하는 곳과, 동물을 넣을 수 있는 거리
+    public Rect penArea = new Rect(0f, 0f, 12f, 7f);
+    public float fenceReach = 1.2f;
     // 침대에서 쉬는 동안에는 움직이지 않음
     public bool isResting;
     private House house;
@@ -127,22 +130,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    // 트리거 충돌 처리
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Animal animal = collision.gameObject.GetComponent<Animal>();
-            if (animal != null && animal.isFollowing)
-            {
-                animal.StopFollowingPlayer();
-                // 울타리 위치를 설정하고 울타리 안으로 넣기
-                Vector2 fencePosition = new Vector2(4, 4); // 울타리의 중심 위치
-                animal.CapturedIn(fencePosition);
-            }
-        }
-    }
-
     // 애니메이션 업데이트
     private void LateUpdate()
     {
@@ -199,32 +186,41 @@ public class Player : MonoBehaviour
         rigidBody.MovePosition(rigidBody.position + nextVector);
     }
 
-    // 울타리를 보고 Space 바를 누르면 따라오는 동물을 울타리에 넣음
+    // 울타리 근처에서 Space 바를 누르면 따라오는 동물을 울타리에 넣음
     // (키 입력은 FixedUpdate가 돌지 않는 프레임에 놓칠 수 있어서 Update에서 처리)
     private void HandleCaptureInput()
     {
-        ObjectData objectData = scanObject != null ? scanObject.GetComponent<ObjectData>() : null;
-        if (objectData == null || objectData.id != 1)
+        if (!IsNearFence() || gameManager.IsInitialDialogue() || gameManager.dialoguePanel.activeSelf)
+            return;
+
+        InteractionHint.Show("Space 바를 누르면 데려온 동물을 울타리에 넣을 수 있어!", 1);
+        if (!Input.GetKeyDown(KeyCode.Space))
             return;
 
         if (!gameManager.HasFollowingAnimals())
         {
-            InteractionHint.Show("울타리에 넣을 동물이 없어! 도망친 동물부터 잡아 와.", 1);
+            InteractionHint.Flash("울타리에 넣을 동물이 없어! 도망친 동물부터 잡아 와.", 2f);
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
         {
-            foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
+            Animal animalScript = animal.GetComponent<Animal>();
+            if (animalScript != null && animalScript.isFollowing)
             {
-                Animal animalScript = animal.GetComponent<Animal>();
-                if (animalScript != null && animalScript.isFollowing)
-                {
-                    Vector2 fencePosition = new Vector2(4, 4); // 울타리의 중심 위치
-                    animalScript.CapturedIn(fencePosition);
-                }
+                Vector2 fencePosition = new Vector2(4, 4); // 울타리의 중심 위치
+                animalScript.CapturedIn(fencePosition);
             }
         }
+    }
+
+    // 울타리 바깥 둘레에서 fenceReach 안에 있는지 확인
+    private bool IsNearFence()
+    {
+        Vector2 position = transform.position;
+        float dx = Mathf.Max(penArea.xMin - position.x, 0f, position.x - penArea.xMax);
+        float dy = Mathf.Max(penArea.yMin - position.y, 0f, position.y - penArea.yMax);
+        return dx * dx + dy * dy <= fenceReach * fenceReach;
     }
 
     // 객체 감지 처리
@@ -236,15 +232,6 @@ public class Player : MonoBehaviour
         if (rayHit.collider != null)
         {
             scanObject = rayHit.collider.gameObject;
-            ObjectData objectData = scanObject.GetComponent<ObjectData>();
-
-            if (objectData != null && objectData.id >= 0 && gameManager != null)
-            {
-                if (gameManager.HasFollowingAnimals() && !gameManager.dialoguePanel.activeSelf)
-                {
-                    gameManager.ShowDialogue(objectData.id);
-                }
-            }
         }
         else
         {

@@ -6,17 +6,17 @@ using UnityEngine.SceneManagement;
 public class PlayerStatus : MonoBehaviour
 {
     public float stamina = 100f;
-    public TMP_Text staminaText; // ½ºÅ×¹Ì³ª¸¦ Ç¥½ÃÇÒ UI ÅØ½ºÆ®
-    public Image staminaIcon; // ½ºÅ×¹Ì³ª ¾ÆÀÌÄÜÀ» Ç¥½ÃÇÒ ÀÌ¹ÌÁö
-    public Sprite[] staminaIcons; // °¢ ½ºÅ×¹Ì³ª ´Ü°è¿¡ ÇØ´çÇÏ´Â ¾ÆÀÌÄÜ ¹è¿­
+    public TMP_Text staminaText; // ìŠ¤í…Œë¯¸ë‚˜ë¥¼ í‘œì‹œí•  UI í…ìŠ¤íŠ¸
+    public Image staminaIcon; // ìŠ¤í…Œë¯¸ë‚˜ ì•„ì´ì½˜ì„ í‘œì‹œí•  ì´ë¯¸ì§€
+    public Sprite[] staminaIcons; // ê° ìŠ¤í…Œë¯¸ë‚˜ ë‹¨ê³„ì— í•´ë‹¹í•˜ëŠ” ì•„ì´ì½˜ ë°°ì—´
 
     public float maxStamina = 100f;
-    public float recoveryRate = 1f; // ½ºÅ×¹Ì³ª È¸º¹ ¼Óµµ (ÃÊ´ç È¸º¹·®)
+    public float recoveryRate = 1f; // ìŠ¤í…Œë¯¸ë‚˜ íšŒë³µ ì†ë„ (ì´ˆë‹¹ íšŒë³µëŸ‰)
 
     public AudioClip warningSound;
     private AudioSource warningSoundAudioSource;
 
-    private float staminaChange = 0f; // Ã¼·Â º¯È­·®À» ÀúÀåÇÏ´Â º¯¼ö
+    private float staminaChange = 0f; // ì²´ë ¥ ë³€í™”ëŸ‰ì„ ì €ì¥í•˜ëŠ” ë³€ìˆ˜
 
     private void Awake()
     {
@@ -75,7 +75,7 @@ public class PlayerStatus : MonoBehaviour
 
     private void ShowGameOver()
     {
-        PlayerPrefs.SetInt("IsVictory", 1); // ÆĞ¹è·Î ¼³Á¤
+        GameResult.Finish(false); // íŒ¨ë°°ë¡œ ê¸°ë¡
         SceneManager.LoadScene("ClearScene", LoadSceneMode.Single);
     }
 }

@@ -78,7 +78,7 @@ public class House : MonoBehaviour
         }
         else if (!isPlayerInside && IsNearHouse(player.transform.position))
         {
-            InteractionHint.Show("앞쪽 문으로 걸어 들어가면 집에 들어갈 수 있어!");
+            InteractionHint.Show("문으로 걸어 들어가면 집에 들어갈 수 있어!");
         }
     }
 
@@ -157,21 +157,24 @@ public class House : MonoBehaviour
         }
     }
 
-    // 앞벽에서 문이 있는 칸은 막히지 않게 해서 드나들 수 있게 한다
+    // 앞벽(아래)과 뒷벽(위)에서 문이 있는 칸은 막히지 않게 해서 드나들 수 있게 한다
     private void OpenDoors()
     {
-        int frontWallRow = interiorCells.yMin - 1;
-        for (int x = interiorCells.xMin; x < interiorCells.xMax; x++)
+        int[] wallRows = { interiorCells.yMin - 1, interiorCells.yMax };
+        foreach (int row in wallRows)
         {
-            Vector3Int cell = new Vector3Int(x, frontWallRow, 0);
-            if (!doorTilemap.HasTile(cell))
-                continue;
+            for (int x = interiorCells.xMin; x < interiorCells.xMax; x++)
+            {
+                Vector3Int cell = new Vector3Int(x, row, 0);
+                if (!doorTilemap.HasTile(cell))
+                    continue;
 
-            // 벽은 규칙 타일이라 지우면 이웃 모양까지 바뀌므로 충돌만 끄고,
-            // 경계선 타일은 바닥에 가려 보이지 않으므로 지운다
-            wallTilemap.SetColliderType(cell, Tile.ColliderType.None);
-            borderLineTilemap.SetTile(cell, null);
-            doorCells.Add((Vector2Int)cell);
+                // 벽은 규칙 타일이라 지우면 이웃 모양까지 바뀌므로 충돌만 끄고,
+                // 경계선 타일은 바닥에 가려 보이지 않으므로 지운다
+                wallTilemap.SetColliderType(cell, Tile.ColliderType.None);
+                borderLineTilemap.SetTile(cell, null);
+                doorCells.Add((Vector2Int)cell);
+            }
         }
     }
 

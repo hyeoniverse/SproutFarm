@@ -4,51 +4,54 @@ using UnityEngine.SceneManagement;
 
 public class ClearSceneManager : MonoBehaviour
 {
-    // °ÔÀÓ ¿À¹ö¿Í °ÔÀÓ Å¬¸®¾î UI ¿ä¼Ò¿¡ ´ëÇÑ ÂüÁ¶
+    // ê²Œì„ ì˜¤ë²„ì™€ ê²Œì„ í´ë¦¬ì–´ UI ìš”ì†Œì— ëŒ€í•œ ì°¸ì¡°
     public GameObject gameOverScene;
     public GameObject gameClearScene;
-    // ¹è°æ Å¸ÀÏ¸ÊÀº Äµ¹ö½º ¹Û(¿ùµå)¿¡ ÀÖ¾î¾ß ÇØ»óµµ¿Í »ó°ü¾øÀÌ Ä«¸Ş¶ó ¾Õ¿¡ ±×·ÁÁö¹Ç·Î µû·Î ÄÑ°í ²ö´Ù
+    // ë°°ê²½ íƒ€ì¼ë§µì€ ìº”ë²„ìŠ¤ ë°–(ì›”ë“œ)ì— ìˆì–´ì•¼ í•´ìƒë„ì™€ ìƒê´€ì—†ì´ ì¹´ë©”ë¼ ì•ì— ê·¸ë ¤ì§€ë¯€ë¡œ ë”°ë¡œ ì¼œê³  ëˆë‹¤
     public GameObject gameOverBackground;
     public GameObject gameClearBackground;
 
     private void Start()
     {
-        // PlayerPrefs¿¡¼­ °ÔÀÓ °á°ú¸¦ °¡Á®¿É´Ï´Ù. ¼³Á¤µÇ¾î ÀÖÁö ¾ÊÀ¸¸é ±âº»°ªÀ¸·Î 0(½Â¸®)À» »ç¿ëÇÕ´Ï´Ù.
+        // PlayerPrefsì—ì„œ ê²Œì„ ê²°ê³¼ë¥¼ ê°€ì ¸ì˜µë‹ˆë‹¤. ì„¤ì •ë˜ì–´ ìˆì§€ ì•Šìœ¼ë©´ ê¸°ë³¸ê°’ìœ¼ë¡œ 0(ìŠ¹ë¦¬)ì„ ì‚¬ìš©í•©ë‹ˆë‹¤.
         bool isVictory = PlayerPrefs.GetInt("IsVictory", 0) == 0;
 
-        // °ÔÀÓ °á°ú¿¡ µû¶ó ÀûÀıÇÑ UI¸¦ È°¼ºÈ­ÇÕ´Ï´Ù.
+        // ê²Œì„ ê²°ê³¼ì— ë”°ë¼ ì ì ˆí•œ UIë¥¼ í™œì„±í™”í•©ë‹ˆë‹¤.
         if (isVictory)
         {
-            gameClearScene.SetActive(true); // °ÔÀÓ Å¬¸®¾î UI È°¼ºÈ­
-            gameOverScene.SetActive(false); // °ÔÀÓ ¿À¹ö UI ºñÈ°¼ºÈ­
+            gameClearScene.SetActive(true); // ê²Œì„ í´ë¦¬ì–´ UI í™œì„±í™”
+            gameOverScene.SetActive(false); // ê²Œì„ ì˜¤ë²„ UI ë¹„í™œì„±í™”
             gameClearBackground.SetActive(true);
             gameOverBackground.SetActive(false);
         }
         else
         {
-            gameClearScene.SetActive(false); // °ÔÀÓ Å¬¸®¾î UI ºñÈ°¼ºÈ­
-            gameOverScene.SetActive(true); // °ÔÀÓ ¿À¹ö UI È°¼ºÈ­
+            gameClearScene.SetActive(false); // ê²Œì„ í´ë¦¬ì–´ UI ë¹„í™œì„±í™”
+            gameOverScene.SetActive(true); // ê²Œì„ ì˜¤ë²„ UI í™œì„±í™”
             gameClearBackground.SetActive(false);
             gameOverBackground.SetActive(true);
         }
+
+        // ì ìˆ˜ì™€ ë­í‚¹ì€ ì›¹ í˜ì´ì§€ì—ì„œ ë³´ì—¬ì¤€ë‹¤ (WebGL ë¹Œë“œì—ì„œë§Œ)
+        WebBridge.ShowResult(GameResult.ToJson());
     }
 
     void Update()
     {
-        // ¸¶¿ì½º ¿ŞÂÊ ¹öÆ° Å¬¸¯À» °¨ÁöÇÏ°Å³ª ÅÍÄ¡ ÀÔ·ÂÀ» °¨ÁöÇÕ´Ï´Ù.
-        if (Input.GetMouseButtonDown(0)) // ¸¶¿ì½º ¿ŞÂÊ ¹öÆ° Å¬¸¯
+        // ë§ˆìš°ìŠ¤ ì™¼ìª½ ë²„íŠ¼ í´ë¦­ì„ ê°ì§€í•˜ê±°ë‚˜ í„°ì¹˜ ì…ë ¥ì„ ê°ì§€í•©ë‹ˆë‹¤.
+        if (Input.GetMouseButtonDown(0)) // ë§ˆìš°ìŠ¤ ì™¼ìª½ ë²„íŠ¼ í´ë¦­
         {
-            RestartGame(); // °ÔÀÓ Àç½ÃÀÛ
+            RestartGame(); // ê²Œì„ ì¬ì‹œì‘
         }
-        else if (Input.touchCount > 0) // ÅÍÄ¡ ÀÔ·Â °¨Áö
+        else if (Input.touchCount > 0) // í„°ì¹˜ ì…ë ¥ ê°ì§€
         {
-            RestartGame(); // °ÔÀÓ Àç½ÃÀÛ
+            RestartGame(); // ê²Œì„ ì¬ì‹œì‘
         }
     }
 
-    // °ÔÀÓÀ» Àç½ÃÀÛÇÏ´Â ¸Ş¼­µå
+    // ê²Œì„ì„ ì¬ì‹œì‘í•˜ëŠ” ë©”ì„œë“œ
     void RestartGame()
     {
-        SceneManager.LoadScene("GameScene", LoadSceneMode.Single); // GameSceneÀ» ·ÎµåÇÏ¿© °ÔÀÓ Àç½ÃÀÛ
+        SceneManager.LoadScene("GameScene", LoadSceneMode.Single); // GameSceneì„ ë¡œë“œí•˜ì—¬ ê²Œì„ ì¬ì‹œì‘
     }
 }

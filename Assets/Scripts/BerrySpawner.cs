@@ -14,7 +14,6 @@ public class BerrySpawner : MonoBehaviour
     public float spawnRingWidth = 6f;  // 화면 가장자리 바깥으로 열매를 뿌리는 폭
     public float minBerrySpacing = 2f;
     public float berryRadius = 0.35f;
-    public Rect penArea = new Rect(0f, 0f, 12f, 7f); // 울타리(동물 우리)가 차지하는 곳 — 여기엔 열매를 두지 않는다
 
     private readonly List<Berry> berries = new List<Berry>();
     private readonly Collider2D[] overlapResults = new Collider2D[1];
@@ -74,6 +73,7 @@ public class BerrySpawner : MonoBehaviour
             return;
 
         playerStatus.IncreaseStamina(staminaAmount);
+        GameResult.AddBerry();
         if (eatSound != null)
         {
             eatAudioSource.PlayOneShot(eatSound);
@@ -123,7 +123,7 @@ public class BerrySpawner : MonoBehaviour
     // 나무·울타리·동물 같은 충돌체, 울타리 안, 집 안과 지붕 아래, 다른 열매 바로 옆은 피한다
     private bool IsFreeSpot(Vector2 position)
     {
-        if (penArea.Contains(position))
+        if (player.penArea.Contains(position))
             return false;
 
         if (house != null && (house.IsUnderRoof(position) || house.IsInside(position)))
