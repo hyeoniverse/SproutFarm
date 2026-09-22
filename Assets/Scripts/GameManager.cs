@@ -184,7 +184,9 @@ public class GameManager : MonoBehaviour
             float angle = startAngle + (i + Random.Range(0.2f, 0.8f)) * 360f / animals.Count;
             Vector2 destination = PickScatterPoint(penCenter, angle, playerNode, taken);
             taken.Add(destination);
-            animals[i].Escape(destination, Random.Range(0f, maxEscapeDelay));
+            // 첫 번째 동물이 바로 출발하며 놀라는 소리를 한 번만 낸다
+            bool first = i == 0;
+            animals[i].Escape(destination, first ? 0f : Random.Range(0f, maxEscapeDelay), first);
         }
     }
 

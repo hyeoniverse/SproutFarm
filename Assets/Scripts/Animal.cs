@@ -285,24 +285,25 @@ public class Animal : MonoBehaviour
 
     // 울타리 안의 동물이 깜짝 놀라 제자리에서 폴짝 뛰고, destination 쪽 울타리로 달려가 뛰어넘은 뒤
     // destination까지 달아난다. delay만큼 기다렸다 출발해서 동물들이 한꺼번에 움직이지 않게 한다.
-    public void Escape(Vector2 destination, float delay)
+    // 놀라는 소리는 여러 마리가 겹쳐 여러 번 들리지 않도록 playSurprisedSound인 한 마리만 낸다.
+    public void Escape(Vector2 destination, float delay, bool playSurprisedSound)
     {
         isCaptured = false;
         isFollowing = false;
         isEscaping = true;
         aiPath.canMove = false;
         destinationSetter.target = null;
-        StartCoroutine(EscapeRoutine(destination, delay));
+        StartCoroutine(EscapeRoutine(destination, delay, playSurprisedSound));
     }
 
-    private IEnumerator EscapeRoutine(Vector2 destination, float delay)
+    private IEnumerator EscapeRoutine(Vector2 destination, float delay, bool playSurprisedSound)
     {
         // 울타리 안에서 서로 밀치거나 울타리에 걸리지 않게, 뛰어넘을 때까지 물리를 끈다
         rigid.simulated = false;
         yield return new WaitForSeconds(delay);
 
         // 탈출 시 효과음 재생
-        if (surprisedSound != null)
+        if (playSurprisedSound && surprisedSound != null)
         {
             surprisedSoundAudioSource.PlayOneShot(surprisedSound);
         }

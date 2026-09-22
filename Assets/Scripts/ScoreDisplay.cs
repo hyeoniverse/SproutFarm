@@ -2,27 +2,26 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 오른쪽 아래 동물 수 옆에 지금까지의 점수(별 + 숫자)를 실시간으로 보여준다.
-// 동물 수 표시의 아이콘·숫자를 복제해 같은 모양으로 만든다.
+// 왼쪽 아래에 지금까지의 환산 점수(별 + "점수 N")를 실시간으로 보여준다.
+// 오른쪽 아래 동물 수 표시의 아이콘·숫자를 복제해 같은 모양으로 만든다.
 // 클리어 보너스·남은 시간·남은 체력 점수는 게임이 끝날 때 더해진다.
 public class ScoreDisplay : MonoBehaviour
 {
     public Image iconTemplate;       // 동물 수 옆 아이콘 (CowImage)
     public TMP_Text valueTemplate;   // 동물 수 숫자 (CowValue)
     public Sprite scoreIcon;         // 별
-    public float valueRightX = -330f; // 점수 숫자의 오른쪽 끝 (소 아이콘 바로 왼쪽)
-    public float valueY = 60f;
+    public Vector2 iconPosition = new Vector2(70f, 65f);  // 화면 왼쪽 아래 모서리 기준
     public float iconSize = 70f;
-    public float iconGap = 10f;
+    public Vector2 textPosition = new Vector2(115f, 60f); // 글자의 왼쪽 끝
 
     private Animal[] animals;
     private TMP_Text scoreText;
-    private RectTransform iconRect;
     private int shownScore = -1;
 
     private void Start()
     {
         animals = FindObjectsByType<Animal>(FindObjectsSortMode.None);
+        Vector2 bottomLeft = Vector2.zero;
 
         Image icon = Instantiate(iconTemplate, iconTemplate.transform.parent);
         icon.name = "ScoreImage";
@@ -32,16 +31,19 @@ public class ScoreDisplay : MonoBehaviour
         {
             Destroy(strayRenderer);
         }
-        iconRect = icon.rectTransform;
+        RectTransform iconRect = icon.rectTransform;
+        iconRect.anchorMin = iconRect.anchorMax = bottomLeft;
         iconRect.sizeDelta = new Vector2(iconSize, iconSize);
+        iconRect.anchoredPosition = iconPosition;
 
         scoreText = Instantiate(valueTemplate, valueTemplate.transform.parent);
         scoreText.name = "ScoreValue";
-        scoreText.horizontalAlignment = HorizontalAlignmentOptions.Right;
+        scoreText.horizontalAlignment = HorizontalAlignmentOptions.Left;
         RectTransform valueRect = scoreText.rectTransform;
-        valueRect.pivot = new Vector2(1f, 0.5f);
-        valueRect.anchoredPosition = new Vector2(valueRightX, valueY);
-        valueRect.sizeDelta = new Vector2(240f, valueRect.sizeDelta.y);
+        valueRect.anchorMin = valueRect.anchorMax = bottomLeft;
+        valueRect.pivot = new Vector2(0f, 0.5f);
+        valueRect.sizeDelta = new Vector2(400f, valueRect.sizeDelta.y);
+        valueRect.anchoredPosition = textPosition;
     }
 
     private void Update()
@@ -62,9 +64,6 @@ public class ScoreDisplay : MonoBehaviour
             return;
 
         shownScore = score;
-        scoreText.text = score.ToString("N0");
-        // 별은 숫자 길이에 맞춰 숫자 바로 왼쪽에 붙인다
-        float numberLeft = valueRightX - scoreText.preferredWidth;
-        iconRect.anchoredPosition = new Vector2(numberLeft - iconGap - iconSize / 2f, valueY + 5f);
+        scoreText.text = "점수 " + score.ToString("N0");
     }
 }

@@ -42,6 +42,17 @@ public class Player : MonoBehaviour
     public float lowStaminaThreshold = 30f;
     // 달릴 때는 걸을 때보다 이 배율만큼 체력이 더 빨리 닳음
     public float runDrainMultiplier = 2f;
+    // 쉬지 않고 움직일수록 체력이 점점 더 빨리 닳음: 계속 움직인 시간이 fatigueRampSeconds가 되면 maxFatigueMultiplier배
+    public float fatigueRampSeconds = 60f;
+    public float maxFatigueMultiplier = 2f;
+    public float fatigueRecoveryRate = 3f; // 멈춰 있으면 쌓인 피로가 움직일 때보다 이 배만큼 빨리 풀림
+    private float continuousMoveTime;
+    // 체력이 떨어질수록 느려짐: 체력이 0이면 원래 속도의 minStaminaSpeedRatio배 (그보다 느려지지는 않음)
+    public float minStaminaSpeedRatio = 0.6f;
+    // 열매를 먹으면 잠깐 빨라짐
+    public float berrySpeedMultiplier = 1.5f;
+    public float berrySpeedDuration = 4f;
+    private float berrySpeedUntil;
     // 울타리(동물 우리)가 차지하는 곳과, 동물을 넣을 수 있는 거리
     public Rect penArea = new Rect(0f, 0f, 12f, 7f);
     public float fenceReach = 1.2f;
@@ -174,14 +185,32 @@ public class Player : MonoBehaviour
         }
 
         bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        bool isMoving = inputVector.magnitude > 0;
         float currentBaseSpeed = isRunning ? boostedSpeed : baseSpeed;
 
         int followingAnimalsCount = GetFollowingAnimalsCount();
         currentSpeed = Mathf.Max(2.5f, currentBaseSpeed - 0.1f * followingAnimalsCount);
+        currentSpeed *= Mathf.Lerp(minStaminaSpeedRatio, 1f, playerStatus.stamina / playerStatus.maxStamina);
+        if (Time.time < berrySpeedUntil)
+        {
+            currentSpeed *= berrySpeedMultiplier;
+        }
 
-        // 체력은 실제로 움직일 때만 더 닳게 하고, 걷기를 1배로 두고 달리기는 runDrainMultiplier배로 닳게 함
-        float staminaFactor = inputVector.magnitude > 0 ? (isRunning ? runDrainMultiplier : 1f) : 0f;
+        // 쉬지 않고 움직인 시간만큼 피로가 쌓이고, 멈춰 있으면 풀림
+        continuousMoveTime = isMoving
+            ? Mathf.Min(fatigueRampSeconds, continuousMoveTime + Time.deltaTime)
+            : Mathf.Max(0f, continuousMoveTime - fatigueRecoveryRate * Time.deltaTime);
+        float fatigue = Mathf.Lerp(1f, maxFatigueMultiplier, continuousMoveTime / fatigueRampSeconds);
+
+        // 체력은 실제로 움직일 때만 더 닳게 하고, 걷기를 1배로 두고 달리기는 runDrainMultiplier배로 닳게 한 뒤 피로 배율을 곱함
+        float staminaFactor = isMoving ? (isRunning ? runDrainMultiplier : 1f) * fatigue : 0f;
         dayNightCycle.UpdatePlayerSpeed(staminaFactor);
+    }
+
+    // 열매를 먹으면 berrySpeedDuration초 동안 berrySpeedMultiplier배로 빨라짐
+    public void ApplyBerrySpeedBonus()
+    {
+        berrySpeedUntil = Time.time + berrySpeedDuration;
     }
 
     // 플레이어 이동 처리
@@ -345,6 +374,8 @@ public class Player : MonoBehaviour
         {
             arrowSpriteImage.gameObject.SetActive(true);
             PointArrowAt(house.GetRestPoint(transform.position));
+            // 나침반이 동물이 아닌 집을 가리키는 중임을 알려줌 (근처 안내가 있으면 그쪽이 먼저 보임)
+            InteractionHint.Show("체력이 얼마 안 남았어! 지금 나침반은 동물 말고 집을 가리키고 있어. 집에 가서 침대에서 푹 쉬자!", -1);
             return;
         }
 
