@@ -1,6 +1,6 @@
 // Leaderboard API (Vercel serverless function).
-//   GET  /api/scores -> { top: [{ rank, name, victory, score }] }  (top 10)
-//   POST /api/scores  { name, victory, animals, berries, remainingMinutes, stamina }  (animals = caught, of 20)
+//   GET  /api/scores -> { top: [{ rank, name, victory, score, clearSeconds }] }  (top 10)
+//   POST /api/scores  { name, victory, animals, berries, remainingMinutes, stamina, clearSeconds }  (animals = caught, of 20)
 //                    -> { rank, score, top }
 // The score is recomputed here from the submitted counts (clamped to what one game
 // can produce), so a client can't simply send a huge total.
@@ -21,7 +21,7 @@ const POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, s
 const TOTAL_ANIMALS = 20;
 // Most one game can produce: every animal, a berry every 15s over an 18-minute day,
 // and 9:00 to midnight left on the clock. Update these if the game changes.
-const LIMITS = { animals: TOTAL_ANIMALS, berries: 100, remainingMinutes: 15 * 60, stamina: 100 };
+const LIMITS = { animals: TOTAL_ANIMALS, berries: 100, remainingMinutes: 15 * 60, stamina: 100, clearSeconds: 60 * 60 };
 
 function redisUrl() {
   return process.env.sproutfarm_REDIS_URL || process.env.REDIS_URL;
@@ -75,7 +75,7 @@ async function topEntries(client) {
   const entries = [];
   for (let i = 0; i < flat.length; i += 2) {
     const entry = JSON.parse(flat[i]);
-    entries.push({ rank: i / 2 + 1, name: entry.name, victory: entry.victory, score: Number(flat[i + 1]) });
+    entries.push({ rank: i / 2 + 1, name: entry.name, victory: entry.victory, score: Number(flat[i + 1]), clearSeconds: entry.clearSeconds || 0 });
   }
   return entries;
 }
@@ -102,7 +102,9 @@ async function submit(client, req, res) {
     stamina: clampCount(body.stamina, LIMITS.stamina),
   };
   const score = scoreOf(record);
-  const member = JSON.stringify({ id: randomUUID(), name, victory: record.victory, at: new Date().toISOString() });
+  // Time taken to clear is shown on the board only; it doesn't affect the score
+  const clearSeconds = record.victory ? clampCount(body.clearSeconds, LIMITS.clearSeconds) : 0;
+  const member = JSON.stringify({ id: randomUUID(), name, victory: record.victory, clearSeconds, at: new Date().toISOString() });
 
   await redis(client, ["ZADD", LEADERBOARD_KEY, score, member]);
   const rank = (await redis(client, ["ZREVRANK", LEADERBOARD_KEY, member])) + 1;

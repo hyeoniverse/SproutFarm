@@ -38,6 +38,14 @@
   }
 
   // Remaining time counts only for the share of animals caught (same as GameResult.Calculate).
+  // Play time from the end of the tutorial to the clear, e.g. "7분 48초" (or "7:48" when short)
+  function formatClearTime(seconds, short) {
+    var minutes = Math.floor(seconds / 60);
+    var rest = seconds % 60;
+    if (short) return minutes + ":" + (rest < 10 ? "0" : "") + rest;
+    return (minutes ? minutes + "분 " : "") + rest + "초";
+  }
+
   function breakdownRows(result) {
     var share = result.totalAnimals > 0 ? result.animals / result.totalAnimals : 0;
     var timePoints = result.totalAnimals > 0
@@ -73,7 +81,8 @@
       item.appendChild(medal);
       item.appendChild(el("span", "result-rank", entry.rank + "위"));
       item.appendChild(el("span", "result-name", entry.name));
-      item.appendChild(el("span", "result-badge", entry.victory ? "클리어" : ""));
+      var badge = entry.victory ? "클리어" + (entry.clearSeconds ? " " + formatClearTime(entry.clearSeconds, true) : "") : "";
+      item.appendChild(el("span", "result-badge", badge));
       item.appendChild(el("span", "result-score", entry.score.toLocaleString("ko-KR") + "점"));
       list.appendChild(item);
     });
@@ -123,6 +132,7 @@
         berries: current.berries,
         remainingMinutes: current.remainingMinutes,
         stamina: current.stamina,
+        clearSeconds: current.clearSeconds,
       }),
     })
       .then(function (response) {
@@ -210,7 +220,9 @@
     current = result;
 
     face.src = result.victory ? "TemplateData/ui/face-clear.png" : "TemplateData/ui/face-gameover.png";
-    title.textContent = result.victory ? "클리어! 동물을 모두 찾았어" : "게임 오버... 다음엔 꼭 잡자!";
+    title.textContent = result.victory
+      ? "클리어! " + formatClearTime(result.clearSeconds || 0, false) + " 만에 모두 찾았어"
+      : "게임 오버... 다음엔 꼭 잡자!";
     total.textContent = "총점 " + result.score.toLocaleString("ko-KR") + "점";
     breakdown.textContent = "";
     breakdownRows(result).forEach(function (row) {
