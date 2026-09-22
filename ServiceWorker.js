@@ -37,7 +37,8 @@ self.addEventListener('fetch', function (e) {
     e.respondWith((async function () {
       try {
         const response = await fetch(e.request);
-        if (e.request.method === 'GET' && response.status === 200) {
+        // Leaderboard responses must stay live, so only static files are cached.
+        if (e.request.method === 'GET' && response.status === 200 && !new URL(e.request.url).pathname.startsWith('/api/')) {
           const cache = await caches.open(cacheName);
           cache.put(e.request, response.clone());
         }
