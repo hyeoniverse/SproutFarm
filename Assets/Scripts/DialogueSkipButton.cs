@@ -10,7 +10,7 @@ public class DialogueSkipButton : MonoBehaviour
     public RectTransform dialogueBox; // 대화창에서 실제로 보이는 상자
     public Sprite normalSprite;       // 글자 없는 넓은 버튼
     public Sprite pressedSprite;      // 같은 버튼이 눌린 모양
-    public string label = "건너뛰기";
+    public string label = "SKIP▶▶";
     public Vector2 size = new Vector2(240f, 80f);
     public float fontSize = 34f;
     public Vector2 offset = new Vector2(-30f, 10f); // 상자 오른쪽 위 모서리에서 버튼 오른쪽 아래 모서리까지
@@ -42,7 +42,10 @@ public class DialogueSkipButton : MonoBehaviour
         text.rectTransform.anchorMax = Vector2.one;
         text.rectTransform.offsetMin = Vector2.zero;
         text.rectTransform.offsetMax = Vector2.zero;
+        // 대화 글자와 같은 폰트·재질·굵기로 맞춘다
         text.font = gameManager.dialogueText.font;
+        text.fontSharedMaterial = gameManager.dialogueText.fontSharedMaterial;
+        text.fontStyle = gameManager.dialogueText.fontStyle;
         text.fontSize = fontSize;
         text.color = gameManager.dialogueText.color;
         text.alignment = TextAlignmentOptions.Center;

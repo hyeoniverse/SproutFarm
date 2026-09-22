@@ -124,6 +124,7 @@ public class GameManager : MonoBehaviour
             if (isInitialDialogue)
             {
                 isInitialDialogue = false;
+                GameResult.MarkPlayStart();
             }
 
             return;
@@ -168,6 +169,7 @@ public class GameManager : MonoBehaviour
         dialoguePanel.SetActive(false);
         currentDialogueIndex = 0;
         isInitialDialogue = false;
+        GameResult.MarkPlayStart();
     }
 
     // 울타리 안의 동물들을 맵 곳곳으로 흩어지게 풀어놓는다. 둘레를 동물 수만큼 고르게 나눠

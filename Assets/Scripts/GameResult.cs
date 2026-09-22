@@ -17,6 +17,9 @@ public static class GameResult
     public static bool IsVictory { get; private set; }
     public static int RemainingMinutes { get; private set; }
     public static int Stamina { get; private set; }
+    public static int ClearSeconds { get; private set; } // 클리어했을 때 튜토리얼이 끝난 뒤 걸린 실제 시간 (랭킹 표시용, 점수와는 상관없음)
+
+    private static float playStartTime;
 
     public static int Score => Calculate(AnimalsCaptured, TotalAnimals, BerriesEaten, RemainingMinutes, Stamina, IsVictory);
 
@@ -72,6 +75,14 @@ public static class GameResult
         IsVictory = false;
         RemainingMinutes = 0;
         Stamina = 0;
+        ClearSeconds = 0;
+        playStartTime = Time.time;
+    }
+
+    // 튜토리얼이 끝나 플레이어가 움직일 수 있게 된 순간 (클리어 시간을 여기서부터 잰다)
+    public static void MarkPlayStart()
+    {
+        playStartTime = Time.time;
     }
 
     public static void AddBerry()
@@ -89,6 +100,7 @@ public static class GameResult
         AnimalsCaptured = CountCaught(animals);
         RemainingMinutes = RemainingMinutesOf(Object.FindAnyObjectByType<DayNightCycle>());
         Stamina = StaminaOf(Object.FindAnyObjectByType<PlayerStatus>());
+        ClearSeconds = isVictory ? Mathf.RoundToInt(Time.time - playStartTime) : 0;
 
         // 결과 화면이 클리어/게임오버 중 무엇을 보여줄지 정하는 기존 값 (0 = 승리)
         PlayerPrefs.SetInt("IsVictory", isVictory ? 0 : 1);
@@ -103,6 +115,7 @@ public static class GameResult
         public int berries;
         public int remainingMinutes;
         public int stamina;
+        public int clearSeconds;
         public int score;
     }
 
@@ -116,6 +129,7 @@ public static class GameResult
             berries = BerriesEaten,
             remainingMinutes = RemainingMinutes,
             stamina = Stamina,
+            clearSeconds = ClearSeconds,
             score = Score,
         });
     }
