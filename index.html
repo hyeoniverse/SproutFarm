@@ -23,6 +23,11 @@
         </div>
       </div>
       <div id="unity-warning"></div>
+      <div id="start-screen">
+        <p id="start-title">Sprout Farm</p>
+        <button id="start-button" type="button" autofocus>START</button>
+        <p id="start-hint">클릭하면 게임을 불러와요 · 소리가 함께 재생돼요</p>
+      </div>
     </div>
     <script>
       window.addEventListener("load", function () {
@@ -36,6 +41,8 @@
       var loadingBar = document.querySelector("#unity-loading-bar");
       var progressBarFull = document.querySelector("#unity-progress-bar-full");
       var warningBanner = document.querySelector("#unity-warning");
+      var startScreen = document.querySelector("#start-screen");
+      var startButton = document.querySelector("#start-button");
 
       // Shows a temporary message banner/ribbon for a few seconds, or
       // a permanent error message on top of the canvas if type=='error'.
@@ -84,6 +91,37 @@
       // the canvas DOM size and WebGL render target sizes yourself.
       // config.matchWebGLToCanvasSize = false;
 
+      // The day/night overlay in GameScene (UI > DayNightCycle > DayNightLight)
+      // is a fixed 2778x1284px rect, so keep the render target inside that size
+      // (with a pixel of headroom for rounding) or the overlay stops short of the
+      // top/right edges on large or HiDPI screens.
+      var maxRenderWidth = 2776;
+      var maxRenderHeight = 1282;
+      function renderPixelRatio() {
+        return Math.min(
+          window.devicePixelRatio || 1,
+          maxRenderWidth / canvas.clientWidth,
+          maxRenderHeight / canvas.clientHeight
+        );
+      }
+
+      // Browsers keep audio suspended until the user interacts with the page.
+      // Create the AudioContext inside the START click and hand it to Unity,
+      // so the game's sound plays as soon as it loads (Safari included).
+      function unlockAudio() {
+        var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!NativeAudioContext) return;
+        var unlocked = new NativeAudioContext();
+        unlocked.resume();
+        window.AudioContext = function (options) {
+          if (!unlocked) return new NativeAudioContext(options);
+          var audioContext = unlocked;
+          unlocked = null;
+          return audioContext;
+        };
+        window.AudioContext.prototype = NativeAudioContext.prototype;
+      }
+
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         // Mobile device style: fill the whole browser client area with the game canvas:
         var meta = document.createElement("meta");
@@ -93,22 +131,34 @@
         document.getElementsByTagName("head")[0].appendChild(meta);
       }
 
-      loadingBar.style.display = "block";
+      function startGame() {
+        unlockAudio();
+        startScreen.remove();
+        config.devicePixelRatio = renderPixelRatio();
+        loadingBar.style.display = "block";
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        })
-          .then((unityInstance) => {
-            loadingBar.style.display = "none";
+        var script = document.createElement("script");
+        script.src = loaderUrl;
+        script.onload = () => {
+          createUnityInstance(canvas, config, (progress) => {
+            progressBarFull.style.width = 100 * progress + "%";
           })
-          .catch((message) => {
-            alert(message);
-          });
-      };
-      document.body.appendChild(script);
+            .then((unityInstance) => {
+              loadingBar.style.display = "none";
+              // config is copied into Module at startup, so later updates go there.
+              unityInstance.Module.devicePixelRatio = renderPixelRatio();
+              window.addEventListener("resize", () => {
+                unityInstance.Module.devicePixelRatio = renderPixelRatio();
+              });
+            })
+            .catch((message) => {
+              alert(message);
+            });
+        };
+        document.body.appendChild(script);
+      }
+
+      startButton.addEventListener("click", startGame, { once: true });
     </script>
   </body>
 </html>
