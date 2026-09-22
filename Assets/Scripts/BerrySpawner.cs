@@ -91,7 +91,7 @@ public class BerrySpawner : MonoBehaviour
         SpriteRenderer spriteRenderer = berryObject.AddComponent<SpriteRenderer>();
         spriteRenderer.sprite = berrySprite;
         spriteRenderer.sharedMaterial = spriteMaterial;
-        spriteRenderer.sortingOrder = -4; // 밭 새싹·꽃·울타리 위, 플레이어 아래
+        spriteRenderer.sortingOrder = 3; // 꽃·캐릭터와 같은 층에서 y 위치로 앞뒤가 정해짐
 
         CircleCollider2D trigger = berryObject.AddComponent<CircleCollider2D>();
         trigger.isTrigger = true;
