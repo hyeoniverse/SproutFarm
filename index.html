@@ -71,6 +71,7 @@
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/SproutFarm.loader.js";
       var config = {
+        arguments: [],
         dataUrl: buildUrl + "/SproutFarm.data.unityweb",
         frameworkUrl: buildUrl + "/SproutFarm.framework.js.unityweb",
         codeUrl: buildUrl + "/SproutFarm.wasm.unityweb",
@@ -87,20 +88,6 @@
       // happening inside the engine, and you would instead like to size up
       // the canvas DOM size and WebGL render target sizes yourself.
       // config.matchWebGLToCanvasSize = false;
-
-      // The day/night overlay in GameScene (UI > DayNightCycle > DayNightLight)
-      // is a fixed 2778x1284px rect, so keep the render target inside that size
-      // (with a pixel of headroom for rounding) or the overlay stops short of the
-      // top/right edges on large or HiDPI screens.
-      var maxRenderWidth = 2776;
-      var maxRenderHeight = 1282;
-      function renderPixelRatio() {
-        return Math.min(
-          window.devicePixelRatio || 1,
-          maxRenderWidth / canvas.clientWidth,
-          maxRenderHeight / canvas.clientHeight
-        );
-      }
 
       // Browsers keep audio suspended until the user interacts with the page.
       // Create the AudioContext inside the START click and hand it to Unity,
@@ -136,7 +123,6 @@
         startButton.remove();
         startHint.remove();
         loadingBar.classList.remove("waiting");
-        config.devicePixelRatio = renderPixelRatio();
 
         var script = document.createElement("script");
         script.src = loaderUrl;
@@ -146,11 +132,6 @@
           })
             .then((unityInstance) => {
               loadingBar.style.display = "none";
-              // config is copied into Module at startup, so later updates go there.
-              unityInstance.Module.devicePixelRatio = renderPixelRatio();
-              window.addEventListener("resize", () => {
-                unityInstance.Module.devicePixelRatio = renderPixelRatio();
-              });
             })
             .catch((message) => {
               alert(message);
