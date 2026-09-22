@@ -23,6 +23,12 @@ public static class GameResult
         + BerriesEaten * PointsPerBerry
         + (IsVictory ? ClearBonus + RemainingMinutes * PointsPerRemainingMinute + Stamina * PointsPerStamina : 0);
 
+    // 게임 중 지금까지의 점수: 울타리에 넣은 동물과 먹은 열매 (클리어 보너스·남은 시간·체력은 끝날 때 더해진다)
+    public static int CurrentScore(int capturedAnimals)
+    {
+        return capturedAnimals * PointsPerAnimal + BerriesEaten * PointsPerBerry;
+    }
+
     public static void Reset()
     {
         BerriesEaten = 0;

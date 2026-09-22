@@ -40,6 +40,8 @@ public class Player : MonoBehaviour
 
     // 체력이 이 값 이하로 떨어지면 화살표가 동물 대신 쉴 곳(집)을 가리킴
     public float lowStaminaThreshold = 30f;
+    // 달릴 때는 걸을 때보다 이 배율만큼 체력이 더 빨리 닳음
+    public float runDrainMultiplier = 2f;
     // 울타리(동물 우리)가 차지하는 곳과, 동물을 넣을 수 있는 거리
     public Rect penArea = new Rect(0f, 0f, 12f, 7f);
     public float fenceReach = 1.2f;
@@ -171,13 +173,14 @@ public class Player : MonoBehaviour
             return;
         }
 
-        float currentBaseSpeed = Input.GetKey(KeyCode.LeftShift) ? boostedSpeed : baseSpeed;
+        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        float currentBaseSpeed = isRunning ? boostedSpeed : baseSpeed;
 
         int followingAnimalsCount = GetFollowingAnimalsCount();
         currentSpeed = Mathf.Max(2.5f, currentBaseSpeed - 0.1f * followingAnimalsCount);
 
-        // 체력은 실제로 움직일 때만 더 닳게 하고, 걷기를 1배로 두고 달리기는 그 비율만큼 더 닳게 함
-        float staminaFactor = inputVector.magnitude > 0 ? currentBaseSpeed / baseSpeed : 0f;
+        // 체력은 실제로 움직일 때만 더 닳게 하고, 걷기를 1배로 두고 달리기는 runDrainMultiplier배로 닳게 함
+        float staminaFactor = inputVector.magnitude > 0 ? (isRunning ? runDrainMultiplier : 1f) : 0f;
         dayNightCycle.UpdatePlayerSpeed(staminaFactor);
     }
 
