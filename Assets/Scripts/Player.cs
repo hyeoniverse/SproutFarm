@@ -38,7 +38,11 @@ public class Player : MonoBehaviour
 
     public Tilemap roofTilemap;
 
-
+    // 체력이 이 값 이하로 떨어지면 화살표가 동물 대신 쉴 곳(집)을 가리킴
+    public float lowStaminaThreshold = 30f;
+    // 침대에서 쉬는 동안에는 움직이지 않음
+    public bool isResting;
+    private House house;
 
     // 컴포넌트 초기화
     private void Awake()
@@ -73,6 +77,7 @@ public class Player : MonoBehaviour
 
         // PlayerStatus 참조 초기화
         playerStatus = FindObjectOfType<PlayerStatus>();
+        house = FindObjectOfType<House>();
     }
 
     // 매 프레임 호출되는 업데이트 메서드
@@ -96,6 +101,9 @@ public class Player : MonoBehaviour
         }
 
         if (gameManager.IsInitialDialogue()) // 처음 다이얼로그를 재생 중일 때는 움직이지 않음
+            return;
+
+        if (isResting) // 침대에서 쉬는 중에는 움직이지 않음
             return;
 
         MovePlayer(); // 플레이어 이동 처리
@@ -319,6 +327,14 @@ public class Player : MonoBehaviour
             return;
         }
 
+        // 체력이 부족하면 가장 가까운 동물 대신 쉴 곳(밖에서는 집 문, 집 안에서는 침대)을 가리킴
+        if (house != null && playerStatus.stamina <= lowStaminaThreshold)
+        {
+            arrowSpriteImage.gameObject.SetActive(true);
+            PointArrowAt(house.GetRestPoint(transform.position));
+            return;
+        }
+
         // 동물 태그를 가진 오브젝트들을 찾음
         GameObject[] animals = GameObject.FindGameObjectsWithTag("Animal");
         if (animals.Length == 0)
@@ -350,29 +366,26 @@ public class Player : MonoBehaviour
         if (closestAnimal != null)
         {
             arrowSpriteImage.gameObject.SetActive(true);
-
-            // 화살표 방향 설정
-            Vector2 direction = closestAnimal.transform.position - transform.position;
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            RectTransform arrowRectTransform = arrowSpriteImage.GetComponent<RectTransform>();
-            if (arrowRectTransform != null)
-            {
-                arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 90); // 화살표가 위를 향하도록 -90도 조정
-            }
+            PointArrowAt(closestAnimal.transform.position);
         }
         else
         {
             arrowSpriteImage.gameObject.SetActive(true);
 
             // 모든 동물이 잡혔을 경우 0,0을 가리킴
-            Vector2 initialPosition = Vector2.zero;
-            Vector2 direction = initialPosition - (Vector2)transform.position;
-            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-            RectTransform arrowRectTransform = arrowSpriteImage.GetComponent<RectTransform>();
-            if (arrowRectTransform != null)
-            {
-                arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 90); // 화살표가 위를 향하도록 -90도 조정
-            }
+            PointArrowAt(Vector2.zero);
+        }
+    }
+
+    // 화살표가 target 쪽을 가리키도록 회전
+    private void PointArrowAt(Vector2 target)
+    {
+        Vector2 direction = target - (Vector2)transform.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        RectTransform arrowRectTransform = arrowSpriteImage.GetComponent<RectTransform>();
+        if (arrowRectTransform != null)
+        {
+            arrowRectTransform.localRotation = Quaternion.Euler(0, 0, angle - 90); // 화살표가 위를 향하도록 -90도 조정
         }
     }
 
