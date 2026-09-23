@@ -13,8 +13,8 @@ public class BaseGrass : MonoBehaviour
     public TileBase fenceTile;                // 울타리 타일 (같은 타일맵의 벽 조각 등은 빼려고)
     public TilemapRenderer[] tallRenderers;   // 나무·해바라기 타일맵
     public TileBase[] tiles;                  // 밑둥에 깔 작은 새싹·꽃
-    public int sortingOrder = 2;              // 캐릭터(3)보다 아래 — 밑둥 풀은 늘 캐릭터 뒤
-    public int fenceGrassOrder = 2;           // 울타리 밑둥 풀도 캐릭터 뒤
+    public int sortingOrder = 3;              // 캐릭터와 같은 층 (밑동 높이로 앞뒤가 정해짐)
+    public int fenceGrassOrder = 3;           // 울타리 밑둥 풀도 같은 층
     public float baseOffset = 0.2f;           // 밑둥 그림 맨 아래에서 이만큼 위에 풀을 놓는다
     [Range(0f, 1f)] public float chance = 0.7f;
     public int seed = 7;
