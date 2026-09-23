@@ -64,10 +64,18 @@
 
 ### 맵 구성
 
+![맵 구성](docs/tech-map.png)
+
+*게임의 생성 규칙을 그대로 옮겨 그린 미리보기입니다. 가로세로 300칸(25구역) 범위로, 구역마다 풍경이 정해지고 흙길이 그물처럼 이어집니다.*
+
 - 픽셀 아트로 된 평화로운 자연 배경입니다. 타일맵으로 되어 있으며, 크기에 제한을 두지 않는 **무한 맵**입니다.
 - 집에서 멀어지면 같은 벌판이 이어지지 않도록, 플레이어 주위를 12칸짜리 구역으로 나눠 **숲 · 바위밭 · 꽃밭 · 과수원 · 연못 · 빈터** 중 하나를 깔아 둡니다. 구역의 위치로 풍경이 정해지므로 같은 곳에 다시 가면 같은 풍경이 나옵니다.
 - **연못**에는 물가와 수련잎이 생기고 물은 지나갈 수 없습니다. **흙길**은 24칸 간격으로 구불구불 이어지며, 집 현관 앞에서 남쪽 큰길까지 진입로가 놓여 있습니다.
 - 소와 닭은 플레이어가 추적하는 대상입니다. 맵 내부를 자유롭게 돌아다니다가 플레이어가 가까이 다가오면 플레이어를 피해 도망갑니다.
+
+![구역별 풍경](docs/tech-zones.png)
+
+*돌아다니며 만나는 풍경. 구역에 따라 나무·그루터기, 꽃·버섯, 바위가 섞여 깔립니다.*
 
 ### 기술 스택
 
@@ -136,45 +144,262 @@
 
 ### 1. 무한 맵
 
-배경으로 쓰는 4개의 타일맵(각 20×20칸)이 플레이어를 따라다닙니다. 플레이어가 한 덩어리의 경계를 벗어나면(`Reposition`) 가장 먼 덩어리를 진행 방향 반대쪽에서 40칸 옮겨 붙여, 타일맵 4장만으로 끝없는 들판을 만듭니다. 맵이 움직여도 플레이어의 좌표는 계속 커지므로, 그 위에 올리는 것들은 모두 **세계 좌표 기준**으로 계산합니다.
+![무한 맵](docs/tech-infinite.png)
+
+배경으로 쓰는 4개의 타일맵(각 20×20칸)이 플레이어를 따라다닙니다. 각 타일맵에는 `Area` 트리거가 달려 있고, 플레이어가 한 덩어리의 경계를 벗어나는 순간 가장 먼 덩어리를 진행 방향 쪽으로 40칸 옮겨 붙입니다.
+
+```csharp
+// Reposition.cs — 경계를 벗어난 순간, 가장 먼 타일맵을 진행 방향으로 옮긴다
+private void OnTriggerExit2D(Collider2D collision)
+{
+    if (!collision.CompareTag("Area")) return;
+
+    Vector3 playerPos = GameManager.instance.player.transform.position;
+    float diffX = Mathf.Abs(playerPos.x - transform.position.x);
+    float diffY = Mathf.Abs(playerPos.y - transform.position.y);
+
+    Vector3 playerDir = GameManager.instance.player.inputVector;
+    float dirX = playerDir.x < 0 ? -1 : 1;
+    float dirY = playerDir.y < 0 ? -1 : 1;
+
+    if (diffX > diffY)      transform.Translate(Vector3.right * dirX * 40); // 가로로 더 멀면 좌우로
+    else if (diffX < diffY) transform.Translate(Vector3.up    * dirY * 40); // 세로로 더 멀면 위아래로
+}
+```
+
+플레이어와의 거리(`diffX`·`diffY`)로 **어느 축으로** 옮길지, 입력 방향(`inputVector`)으로 **어느 쪽으로** 옮길지 정합니다. 타일맵 4장만 돌려쓰므로 맵이 아무리 넓어져도 비용이 늘지 않습니다. 대신 맵이 움직여도 플레이어의 좌표는 계속 커지므로, 그 위에 올리는 것들은 모두 **세계 좌표 기준**으로 계산합니다.
 
 ### 2. 절차적 지형 생성 (`WildTerrain`)
 
 무한 맵이 같은 풍경만 반복하지 않도록, 플레이어 주위를 12칸짜리 구역으로 나눠 3×3 범위를 만들고 멀어진 구역은 지웁니다.
 
-- **결정적 생성** — 구역의 풍경(숲·바위밭·꽃밭·과수원·연못·빈터)은 `seed ^ (x·73856093) ^ (y·19349663)`로 만든 난수로 정합니다. 좌표만으로 정해지므로 저장 없이도 같은 자리에 가면 같은 풍경이 나옵니다.
-- **프레임 분할** — 한 구역을 한 프레임에 다 만들면 이동 중에 400ms 가까이 멈춥니다. 칸 목록을 들고 있다가 **프레임당 48칸씩** 꾸며서 최악 프레임을 100ms대로 낮췄습니다.
-- **길찾기 부분 갱신** — 나무·바위·물처럼 길을 막는 것이 실제로 생겼을 때만 그 구역 범위의 A* 그래프를 다시 읽습니다.
-- **블롭 타일셋** — 연못 물가와 흙길 가장자리는 47조각 타일셋에서 이웃 8칸의 모양(같은 바닥인지 아닌지)을 문자열 키로 만들어 골라 그립니다. 같은 코드가 물가와 흙길 양쪽에 쓰입니다.
-- **이어지는 길** — 길은 `sin` 곡선을 쓴 순수 함수라 구역 경계에서도 끊기지 않습니다. 집 앞에서 남쪽 큰길까지 이어지는 진입로는 집·울타리·밭 타일이 있는 칸을 비켜 갑니다.
-- **장식 정리** — 물과 길 위에 원래 깔려 있던 꽃은 치워 두고, 무한 맵이 움직여 다른 꽃이 그 자리로 오면 다시 치웁니다. 구역을 지울 때 원래대로 되돌립니다.
+**결정적 생성** — 구역의 풍경은 좌표를 섞은 해시로 정합니다. 저장해 두지 않아도 같은 자리에 다시 가면 같은 풍경이 나옵니다.
+
+```csharp
+// 숲 3 : 바위밭 2 : 꽃밭 3 : 과수원 2 : 연못 3 : 빈터 1 — 뽑기 주머니로 비중을 준다
+private static readonly Theme[] ThemeBag =
+{
+    Theme.Woods, Theme.Woods, Theme.Woods,
+    Theme.Rocky, Theme.Rocky,
+    Theme.Meadow, Theme.Meadow, Theme.Meadow,
+    ...
+};
+
+// 구역 좌표를 큰 소수로 섞어 구역마다 다른 난수를 얻는다
+state.random = new System.Random(seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663));
+state.theme  = ThemeBag[state.random.Next(ThemeBag.Length)];
+```
+
+**프레임 분할** — 한 구역(144칸)을 한 프레임에 다 만들면 달릴 때마다 화면이 멎습니다. 꾸밀 칸 목록을 들고 있다가 **프레임당 48칸씩**만 처리하고 나머지는 다음 프레임으로 넘깁니다.
+
+```csharp
+private void Decorate(BuildState state)
+{
+    int limit = Mathf.Min(state.index + cellsPerFrame, state.cells.Count); // cellsPerFrame = 48
+    for (; state.index < limit; state.index++)
+    {
+        // 풍경에 따라 나무·꽃·바위를 놓는다
+    }
+
+    if (state.index < state.cells.Count) return; // 아직 남았으면 다음 프레임에 이어서
+
+    building = null;
+    // 길을 막는 것(나무·바위·물)이 실제로 생겼을 때만 A* 그래프를 다시 읽는다
+    if (state.solidChanged || state.water.Count > 0) RescanPaths(state.chunk);
+}
+```
+
+한 프레임에 몰아 만들 때 **377ms**까지 튀던 프레임이, 분할과 조건부 재스캔을 넣고 100ms대로 내려갔습니다. A\* 재스캔도 구역 범위만 `Bounds`로 넘겨 부분 갱신합니다.
+
+**블롭 타일셋** — 연못 물가와 흙길 가장자리는 47조각 타일셋에서 이웃 8칸의 모양을 보고 고릅니다.
+
+![블롭 타일셋](docs/tech-blob-sheets.png)
+
+*왼쪽이 연못 물가(잔디), 오른쪽이 흙길(흙) 타일셋입니다.*
+
+```csharp
+// 이웃 8칸이 '같은 바닥'인지를 8글자 키로 만들어 47조각 중 하나를 찾는다
+private static bool BlobLookup(System.Func<int, int, bool> same, out int sprite)
+{
+    bool top = same(0, 1), bottom = same(0, -1), left = same(-1, 0), right = same(1, 0);
+    char Side(bool isSame) => isSame ? 'G' : 'w';
+    string look = new string(new[]
+    {
+        Side(top && left && same(-1, 1)),   Side(top),    Side(top && right && same(1, 1)),
+        Side(left),                                       Side(right),
+        Side(bottom && left && same(-1, -1)), Side(bottom), Side(bottom && right && same(1, -1)),
+    });
+    return ShoreLookup.TryGetValue(look, out sprite);
+}
+```
+
+대각선 이웃은 **양옆이 모두 같을 때만** 같다고 봅니다(`top && left && same(-1, 1)`). 이 조건이 없으면 모서리에서 엉뚱한 조각이 뽑혀 가장자리가 끊겨 보입니다. 판정 함수 `same`만 바꿔 끼우면 같은 코드가 물가와 흙길 양쪽에 그대로 쓰입니다.
+
+![블롭 결과](docs/tech-blob-result.png)
+
+**이어지는 길** — 길은 좌표만 넣으면 답이 나오는 순수 함수라, 구역을 따로 만들어도 경계에서 어긋나지 않습니다.
+
+```csharp
+private bool OnPathBand(int x, int y)
+{
+    int row = Mathf.RoundToInt((float)y / pathSpacing);          // pathSpacing = 24
+    for (int k = row - 1; k <= row + 1; k++)
+    {
+        // 24칸 간격의 가로길이 sin 곡선을 따라 구불거린다
+        float center = k * pathSpacing + pathWander * Mathf.Sin(x * pathCurve + k * 2.3f);
+        if (Mathf.Abs(y - center) <= pathWidth) return true;
+    }
+    // 세로길도 x·y만 바꿔 같은 방식으로 판정한다
+    ...
+}
+
+private bool OnPath(int x, int y)
+{
+    return OnHomePath(x, y)
+        || OnPathBand(x, y)
+        || (OnPathBand(x - 1, y) && OnPathBand(x + 1, y))   // 비스듬한 구간에서 생기는
+        || (OnPathBand(x, y - 1) && OnPathBand(x, y + 1));  // 한 칸짜리 구멍을 메운다
+}
+```
+
+곡선이 비스듬히 지나가는 구간에서는 칸이 계단처럼 어긋나 길이 갈라져 보였습니다. 위아래(또는 좌우)가 모두 길이면 가운데도 길로 쳐서 메우니 대각선도 하나로 이어집니다. 집 앞 진입로(`OnHomePath`)는 집·울타리·밭 타일이 있는 칸을 비켜 남쪽 큰길까지 내려갑니다.
+
+**장식 정리** — 물과 길 위에 원래 깔려 있던 꽃은 치워 두고, 무한 맵이 움직여 다른 꽃이 그 자리로 오면 다시 치웁니다. 구역을 지울 때는 치워 둔 것을 원래대로 되돌립니다.
 
 ### 3. 그리는 순서(레이어)
 
-캐릭터·동물·나무·꽃이 **같은 정렬 층**에서 위치로 앞뒤가 정해집니다. URP 2D Renderer의 투명 정렬 축을 Y로 두고, 타일맵은 `Individual` 모드로 두어 타일 하나하나가 따로 정렬됩니다.
+![정렬](docs/tech-sorting.png)
 
-- **기준점 통일** — 스프라이트는 `FullRect`로 불러와 칸 전체가 경계가 되게 하고, 그림을 칸 바닥에 붙여 둬서 모든 오브젝트가 "밑동 + 반 칸"이라는 같은 기준을 갖습니다. (Tight로 두면 작은 새싹은 잎사귀 한가운데가 기준이 되어, 캐릭터 발보다 위에 있어도 앞으로 나옵니다.)
-- **여유 두기** — 꽃·새싹은 그림틀을 한 칸 더 높게 만들어 기준점을 올렸습니다. 덕분에 캐릭터 발보다 반 칸 이상 앞에 있을 때만 앞으로 나와, 다리만 가리고 몸통·머리는 가리지 않습니다.
-- 소는 그림이 두 칸 높이라 기준이 발보다 한 칸 가까이 위에 잡혀 있었는데, 칸 안에서 그림 위치를 옮겨 캐릭터와 같은 기준으로 맞췄습니다.
+*왼쪽 — 꽃이 캐릭터보다 위(북쪽)에 있으면 뒤에 그려집니다. 오른쪽 — 아래(남쪽)에 있으면 앞으로 나와 다리만 가립니다.*
+
+캐릭터·동물·나무·꽃이 모두 **같은 정렬 층(order 3)** 에서 위치로 앞뒤가 정해집니다. URP 2D Renderer의 투명 정렬 축을 Y로 두고, 타일맵은 `Individual` 모드로 두어 타일 하나하나가 따로 정렬되게 했습니다.
+
+```csharp
+// BaseGrass.cs — 타일맵을 만들 때 정렬 층과 모드를 직접 맞춘다
+private Tilemap CreateTilemap(string name, int order, TilemapRenderer.Mode mode)
+{
+    ...
+    tilemapRenderer.sortingOrder = order; // 캐릭터·동물·나무와 같은 층
+    tilemapRenderer.mode = mode;          // Individual = 칸 하나하나가 따로 정렬된다
+    // 꽃 그림틀이 칸보다 한 칸 높아서, 반 칸 올려야 그림이 제자리에 온다
+    tilemapObject.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+    return tilemap;
+}
+```
+
+- **기준점 통일** — 스프라이트를 `FullRect`로 불러와 칸 전체가 경계가 되게 하고, 그림을 칸 바닥에 붙여 모든 오브젝트가 "밑동 + 반 칸"이라는 같은 기준을 갖게 했습니다. `Tight`로 두면 작은 새싹은 잎사귀 한가운데가 기준이 되어, 캐릭터 발보다 위에 있어도 앞으로 튀어나옵니다.
+- **여유 두기** — 꽃·새싹은 그림틀만 한 칸 더 높게 만들어 기준점을 반 칸 올렸습니다. 덕분에 캐릭터 발보다 확실히 앞에 있을 때만 앞으로 나와, 다리만 가리고 몸통·머리는 가리지 않습니다.
+
+![꽃·새싹 시트](docs/tech-plant-frames.png)
+
+- 소는 그림이 두 칸 높이라 기준이 발보다 한 칸 가까이 위에 잡혀 있었는데, 칸 안에서 그림을 올려 캐릭터와 같은 기준으로 맞췄습니다(잘리지 않게 위쪽 여백만큼만).
 
 ### 4. 동물 AI
 
-동물이 플레이어를 쫓거나 피할 때 경로를 직선으로만 계산하면 장애물에 걸려 멈춥니다. A* 길찾기(Grid Graph)로 장애물을 피해 움직이며, 상태에 따라 행동이 달라집니다.
+![동물 탈출](docs/tech-escape.png)
 
-- **탈출** — 게임이 시작되면 울타리 밖으로 뛰어넘는 연출과 함께 사방으로 흩어집니다. 목적지는 A*로 갈 수 있는지 확인한 자리 중에서 고릅니다.
+동물이 플레이어를 쫓거나 피할 때 경로를 직선으로만 계산하면 장애물에 걸려 멈춥니다. A\* 길찾기(Grid Graph)로 장애물을 피해 움직이며, 상태에 따라 행동이 달라집니다.
+
+```csharp
+// GameManager.cs — 울타리에서 멀고, 플레이어가 걸어갈 수 있는 빈 곳을 고른다
+for (int attempt = 0; attempt < 30; attempt++)
+{
+    float spread = 20f + attempt * 6f; // 처음엔 정해진 방향 근처, 잘 안 되면 점점 넓게
+    float radians = (angle + Random.Range(-spread, spread)) * Mathf.Deg2Rad;
+    float distance = Random.Range(minScatterDistance, maxScatterDistance);
+    Vector2 point = penCenter + new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * distance;
+    ...
+    NNInfo nearest = AstarPath.active.GetNearest(point, NNConstraint.Default);
+    // 물·바위에 둘러싸여 영영 못 잡는 자리에 떨어지지 않도록 걸어갈 수 있는지 확인한다
+    if (nearest.node == null || !PathUtilities.IsPathPossible(playerNode, nearest.node)) continue;
+    point = nearest.position;
+}
+```
+
+- **탈출** — 게임이 시작되면 울타리 밖으로 뛰어넘는 연출과 함께 사방으로 흩어집니다. 목적지는 `IsPathPossible`로 **플레이어가 실제로 걸어갈 수 있는지** 확인한 자리 중에서 고릅니다.
 - **도망 · 추종 · 우리 안** — 플레이어가 가까우면 반대 방향으로 도망치고, 잡히면 따라다니며, 울타리에 넣으면 그 안을 배회합니다.
 
 ### 5. 시간 · 체력
 
-게임은 오전 9시에 시작해 자정에 끝납니다. 게임 시간 1분이 실제 1.2초라 한 판이 약 18분입니다. 체력도 게임 시간 기준으로 닳아서, 쉬지 않고 걸으면 게임 시간 3시간 만에 바닥납니다. 달리면 더 빨리, 쉬지 않고 움직이면 피로가 쌓여 더 빨리 닳고 속도도 느려집니다. 흙길 위에서는 35%만 닳고, 집 침대에서 자면 체력이 가득 차는 대신 한 시간이 지나갑니다.
+![하루](docs/tech-daynight.png)
+
+게임은 오전 9시에 시작해 자정에 끝납니다. 게임 시간 1분이 실제 1.2초라 한 판이 약 18분입니다. 체력도 실제 시간이 아니라 **게임 시간 기준**으로 닳습니다.
+
+```csharp
+// DayNightCycle.cs — 게임 시간 1분마다 호출된다
+private void DecreasePlayerStamina()
+{
+    // 쉬지 않고 걸으면 게임 시간 3시간(hoursToExhaustion)에 바닥나는 양
+    float baseStaminaDecreaseRate = 100f / (hoursToExhaustion * minutesPerHour);
+    // playerSpeed는 Player가 넘겨주는 배율 (걷기 1배, 달리기·피로가 쌓이면 그만큼 커진다)
+    float decrease = playerSpeed != 0f
+        ? baseStaminaDecreaseRate * playerSpeed
+        : baseStaminaDecreaseRate * idleDrainRatio;   // 멈춰 있으면 조금만
+    if (playerOnPath) decrease *= pathDrainRatio;     // 흙길은 걷기 편해서 천천히 닳는다 (35%)
+    playerStatus.DecreaseStamina(decrease);
+}
+```
+
+흙길 판정은 캐릭터의 **발 위치**로 합니다. 지형이 정해진 함수로 만들어져 있어 콜라이더 없이 좌표만 넘겨 물어보면 됩니다.
+
+```csharp
+// Player.cs — 발끝 좌표로 길 위인지 묻고, 길이면 더 빨리 움직인다
+bool onPath = WildTerrain.OnPathAt(transform.position + Vector3.down * feetOffset);
+if (onPath) currentSpeed *= pathSpeedMultiplier;      // 1.25배
+dayNightCycle.SetOnPath(onPath);
+```
 
 ### 6. 랭킹 서버
 
-`api/scores.js`(Vercel 서버리스 함수)가 제출된 기록으로 점수를 **다시 계산**해 Redis 정렬 집합에 저장하고 TOP 10을 돌려줍니다. Unity의 `GameResult.Calculate`와 같은 공식을 쓰므로 클라이언트가 점수만 크게 보내도 반영되지 않고, 한 판에서 나올 수 있는 값으로 잘라냅니다. 이름은 10자까지, 연속 제출은 10초 간격으로 제한합니다.
+![결과와 랭킹](docs/screenshot-result.png)
+
+`api/scores.js`(Vercel 서버리스 함수)가 제출된 기록으로 점수를 **다시 계산**해 Redis 정렬 집합에 저장하고 TOP 10을 돌려줍니다.
+
+```js
+// api/scores.js — Unity의 GameResult.Calculate와 같은 공식
+const POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, stamina: 5 };
+// 한 판에서 나올 수 있는 최대치. 제출값은 여기에 맞춰 잘라낸다.
+const LIMITS = { animals: 20, berries: 100, remainingMinutes: 15 * 60, stamina: 100, clearSeconds: 3600 };
+
+function scoreOf(record) {
+  // 남은 시간 점수는 잡은 비율만큼만 — 일찍 쓰러졌다고 점수가 커지지 않는다
+  const timePoints = Math.floor(
+    (record.remainingMinutes * POINTS.remainingMinute * record.animals) / TOTAL_ANIMALS);
+  return record.animals * POINTS.animal + record.berries * POINTS.berry + timePoints
+    + record.stamina * POINTS.stamina + (record.victory ? POINTS.clearBonus : 0);
+}
+```
+
+클라이언트가 보내는 것은 **점수가 아니라 잡은 동물 수·먹은 열매 수 같은 기록**이고, 서버가 그 값을 한 판에서 나올 수 있는 범위로 자른 뒤 직접 계산합니다. 이름은 10자까지, 연속 제출은 10초 간격으로 제한합니다. Redis 접속 정보는 저장소에 두지 않고 Vercel 환경 변수로만 넘깁니다.
 
 ### 7. 웹 배포
 
-WebGL 빌드를 Brotli로 압축해(`.unityweb`) Vercel에 올리고, `vercel.json`에서 압축 헤더를 붙입니다. Service Worker는 network-first로 동작해 새 빌드가 바로 반영되고, 네트워크가 끊겼을 때만 캐시를 씁니다.
+WebGL 빌드를 Brotli로 압축해(`.unityweb`) Vercel에 올립니다. 정적 호스팅이라 압축 파일임을 알려 줄 헤더를 직접 붙여야 브라우저가 풀어서 읽습니다.
+
+```json
+// vercel.json
+{ "source": "/Build/(.*)\\.unityweb",
+  "headers": [{ "key": "Content-Encoding", "value": "br" }] }
+```
+
+Service Worker는 **network-first**로 동작합니다. 캐시를 먼저 보면 새 빌드를 올려도 옛 게임이 계속 뜨기 때문입니다.
+
+```js
+// ServiceWorker.js — 항상 네트워크를 먼저, 실패했을 때만 캐시
+try {
+  const response = await fetch(e.request);
+  // 랭킹 응답은 늘 최신이어야 하므로 정적 파일만 캐시에 넣는다
+  if (e.request.method === 'GET' && response.status === 200
+      && !new URL(e.request.url).pathname.startsWith('/api/')) {
+    (await caches.open(cacheName)).put(e.request, response.clone());
+  }
+  return response;
+} catch (error) {
+  const cached = await caches.match(e.request);
+  if (cached) return cached;
+  throw error;
+}
+```
 
 ## Demo
 
