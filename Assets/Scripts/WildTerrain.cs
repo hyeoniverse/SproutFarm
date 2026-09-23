@@ -307,29 +307,29 @@ public class WildTerrain : MonoBehaviour
                         // 나무가 많은 숲: 가로지르는 빈 줄을 남겨 지나갈 수 있게 한다
                         if ((cell.x + cell.y) % 7 == 0 || (cell.x - cell.y) % 9 == 0)
                             break;
-                        if (roll < 0.18)
+                        if (roll < 0.22)
                             Put(state, objectMap, cell, trees[0], 1);
-                        else if (roll < 0.24)
+                        else if (roll < 0.30)
                             Put(state, objectMap, cell, Pick(state, trees), 2);
-                        else if (roll < 0.28)
-                            Put(state, flowerMap, cell, Pick(state, mushrooms), 1);
-                        else if (roll < 0.3)
+                        else if (roll < 0.40)
+                            Put(state, flowerMap, cell, Pick(state, mushrooms), 0);
+                        else if (roll < 0.44)
                             Put(state, objectMap, cell, Pick(state, stumps), 1);
                         break;
 
                     case Theme.Rocky:
-                        if (roll < 0.08)
+                        if (roll < 0.14)
                             Put(state, objectMap, cell, Pick(state, rocks), 1);
-                        else if (roll < 0.11)
+                        else if (roll < 0.19)
                             Put(state, objectMap, cell, Pick(state, stumps), 1);
-                        else if (roll < 0.14)
+                        else if (roll < 0.25)
                             Put(state, objectMap, cell, Pick(state, bushes), 2);
                         break;
 
                     case Theme.Meadow:
-                        if (roll < 0.2)
-                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
-                        else if (roll < 0.215)
+                        if (roll < 0.40)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 0);
+                        else if (roll < 0.43)
                             Put(state, objectMap, cell, sunflower, 2);
                         break;
 
@@ -337,23 +337,23 @@ public class WildTerrain : MonoBehaviour
                         // 과일나무를 네 칸 간격으로 줄 맞춰 심는다
                         if (cell.x % 4 == 0 && cell.y % 4 == 0)
                             Put(state, objectMap, cell, trees[trees.Length - 1], 3);
-                        else if (roll < 0.1)
-                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
+                        else if (roll < 0.26)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 0);
                         break;
 
                     case Theme.Pond:
-                        if (roll < 0.12)
-                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
-                        else if (roll < 0.15)
+                        if (roll < 0.28)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 0);
+                        else if (roll < 0.33)
                             Put(state, objectMap, cell, Pick(state, bushes), 2);
-                        else if (roll < 0.17)
+                        else if (roll < 0.37)
                             Put(state, objectMap, cell, trees[0], 2);
                         break;
 
                     case Theme.Clearing:
-                        if (roll < 0.09)
-                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
-                        else if (roll < 0.11)
+                        if (roll < 0.22)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 0);
+                        else if (roll < 0.26)
                             Put(state, objectMap, cell, Pick(state, bushes), 2);
                         break;
                 }
