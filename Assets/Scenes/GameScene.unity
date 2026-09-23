@@ -42055,6 +42055,20 @@ MonoBehaviour:
   - {fileID: 9280959, guid: 68705498123c64e46a2f157971926e31, type: 3}
   - {fileID: 1284171188, guid: 68705498123c64e46a2f157971926e31, type: 3}
   - {fileID: -3052925, guid: 68705498123c64e46a2f157971926e31, type: 3}
+  pathBlockers:
+  - {fileID: 175265753}
+  - {fileID: 948997799}
+  - {fileID: 457292551}
+  - {fileID: 803830621}
+  - {fileID: 1564892180}
+  - {fileID: 776341818}
+  - {fileID: 1221828242}
+  - {fileID: 1091890592}
+  - {fileID: 785714304}
+  - {fileID: 1492569785}
+  - {fileID: 1637293587}
+  - {fileID: 240457000}
+  - {fileID: 1975585777}
   groundDecor:
   - {fileID: 551131975}
   - {fileID: 693804497}
@@ -42067,6 +42081,8 @@ MonoBehaviour:
   pathWidth: 1.8
   pathWander: 2.5
   pathCurve: 0.055
+  homePathFrom: {x: -5, y: 2}
+  homePathWidth: 1.2
   pondDecorOrder: -8
   flowerOrder: 3
   objectOrder: 7

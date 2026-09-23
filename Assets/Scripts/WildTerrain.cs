@@ -27,6 +27,7 @@ public class WildTerrain : MonoBehaviour
     public TileBase pondWater;    // 물 (부딪히는 타일)
     public TileBase[] lilyPads;
     public Sprite[] shoreSprites; // Grass.png의 물가 그림들 (Grass_0부터 차례대로)
+    public TilemapRenderer[] pathBlockers;  // 길을 깔면 안 되는 곳 (집·울타리·밭)
     public TilemapRenderer[] groundDecor; // 원래 깔려 있는 꽃·새싹 타일맵 (겹치지 않게 피하고, 물 자리에서는 치운다)
 
     [Header("그리는 순서")]
@@ -38,7 +39,6 @@ public class WildTerrain : MonoBehaviour
     public int objectOrder = 7;              // 나무와 같은 층 (캐릭터보다 위)
     public int baseGrassOrder = 8;           // 나무 밑둥에 깔리는 풀 (나무보다 위)
     public float baseOffset = 0.2f;
-    public float sortLift = 0.5f;            // 캐릭터 그림에서 발부터 한가운데까지의 높이
 
     // 물가 그림 고르기: [왼위, 위, 오른위, 왼, 오른, 왼아래, 아래, 오른아래]에 물이 보이면 w, 풀이면 G
     private static readonly Dictionary<string, int> ShoreLookup = new Dictionary<string, int>
@@ -60,6 +60,8 @@ public class WildTerrain : MonoBehaviour
     public float pathWidth = 1.8f;  // 길 반폭 (네 칸쯤)
     public float pathWander = 2.5f; // 길이 휘어지는 폭
     public float pathCurve = 0.055f; // 길이 휘어지는 빠르기
+    public Vector2Int homePathFrom = new Vector2Int(-5, -4); // 집 앞에서 시작해 남쪽 큰길까지 이어지는 진입로
+    public float homePathWidth = 1.2f;
 
     private enum Theme { Woods, Rocky, Meadow, Orchard, Pond, Clearing }
 
@@ -258,10 +260,6 @@ public class WildTerrain : MonoBehaviour
                 return;
 
             tilemap.SetTile(cell, tile);
-            if (tilemap == flowerMap)
-            {
-                BaseGrass.Align(flowerMap, cell, sortLift);
-            }
             taken.Add(cell);
             // 나무·해바라기는 밑둥 자리에 작은 풀을 깔아, 밑둥 쪽만 풀이 앞에 보이게 한다
             if (tilemap == objectMap && baseGrass.Length > 0 && random.NextDouble() < 0.5)
@@ -363,28 +361,34 @@ public class WildTerrain : MonoBehaviour
 
         foreach (Vector3Int cell in CellsOf(chunk))
         {
-            var here = new Vector2Int(cell.x, cell.y);
-            if (homeArea.Contains(here) || water.Contains(here) || !OnPath(cell.x, cell.y))
-                continue;
-
-            path.Add(here);
+            if (PathCell(cell.x, cell.y, water))
+            {
+                path.Add(new Vector2Int(cell.x, cell.y));
+            }
         }
 
         // 가장자리가 둥글게 보이도록, 옆 칸도 길인지에 따라 흙 그림을 고른다
         foreach (Vector2Int cell in path)
         {
-            bool Dirt(int dx, int dy)
-            {
-                int x = cell.x + dx;
-                int y = cell.y + dy;
-                return OnPath(x, y) && !homeArea.Contains(new Vector2Int(x, y)) && !water.Contains(new Vector2Int(x, y));
-            }
+            bool Dirt(int dx, int dy) => PathCell(cell.x + dx, cell.y + dy, water);
 
             if (BlobLookup(Dirt, out int sprite) && sprite < pathSprites.Length)
             {
                 pathMap.SetTile(new Vector3Int(cell.x, cell.y, 0), BlobTile(pathTiles, pathSprites, sprite));
             }
         }
+    }
+
+    // 집·울타리·밭 위에는 길을 깔지 않는다
+    private bool Blocked(Vector3Int cell)
+    {
+        foreach (TilemapRenderer blocker in pathBlockers)
+        {
+            Tilemap map = blocker.GetComponent<Tilemap>();
+            if (map.GetTile(map.WorldToCell(new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f))) != null)
+                return true;
+        }
+        return false;
     }
 
     // 여덟 이웃이 같은 바닥인지 보고 47조각 타일셋에서 맞는 그림을 고른다
@@ -425,7 +429,8 @@ public class WildTerrain : MonoBehaviour
     // 비스듬히 꺾이는 곳에서 폭이 좁아지면 길이 끊겨 보이므로, 양옆이 길이면 가운데도 길로 친다
     private bool OnPath(int x, int y)
     {
-        return OnPathBand(x, y)
+        return OnHomePath(x, y)
+            || OnPathBand(x, y)
             || (OnPathBand(x - 1, y) && OnPathBand(x + 1, y))
             || (OnPathBand(x, y - 1) && OnPathBand(x, y + 1));
     }
@@ -451,7 +456,27 @@ public class WildTerrain : MonoBehaviour
         return false;
     }
 
-    // 길 위에 서 있는지 (길 위에서는 빨리 걷고 체력이 닳지 않는다)
+    // 이 칸에 길을 까는지 (구역 밖 이웃도 같은 기준으로 볼 수 있게 순수 함수로 둔다)
+    private bool PathCell(int x, int y, HashSet<Vector2Int> water)
+    {
+        var here = new Vector2Int(x, y);
+        if (water.Contains(here) || !OnPath(x, y))
+            return false;
+        if (!homeArea.Contains(here))
+            return true;
+
+        return OnHomePath(x, y) && !Blocked(new Vector3Int(x, y, 0));
+    }
+
+    // 집 앞에서 남쪽 큰길까지 이어지는 진입로
+    private bool OnHomePath(int x, int y)
+    {
+        return Mathf.Abs(x - homePathFrom.x) <= homePathWidth
+            && y <= homePathFrom.y
+            && y >= -(pathSpacing + 6);
+    }
+
+    // 길 위에 서 있는지 (길 위에서는 빨리 걷고 체력이 천천히 닳는다)
     public static bool OnPathAt(Vector3 position)
     {
         if (current == null || current.pathMap == null)
@@ -573,13 +598,10 @@ public class WildTerrain : MonoBehaviour
         return null;
     }
 
-    // 꽃·새싹 타일맵은 무한 맵을 따라 움직이고 반 칸 올려 그리므로,
-    // 이 자리에 겹쳐 보이는 칸은 위아래 두 개다.
+    // 꽃·새싹 타일맵은 무한 맵을 따라 움직이므로, 세계 좌표로 칸을 찾는다
     private static IEnumerable<Vector3Int> DecorCells(Tilemap decor, Vector3Int cell)
     {
-        Vector3Int here = decor.WorldToCell(new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f));
-        yield return here;
-        yield return here + Vector3Int.down;
+        yield return decor.WorldToCell(new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f));
     }
 
     // 물이 들어찬 자리의 꽃·새싹을 치운다 (물 위에 꽃이 떠 있는 것처럼 보이지 않게)

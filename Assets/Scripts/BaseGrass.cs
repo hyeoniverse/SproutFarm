@@ -14,7 +14,7 @@ public class BaseGrass : MonoBehaviour
     public TilemapRenderer[] tallRenderers;   // 나무·해바라기 타일맵
     public TileBase[] tiles;                  // 밑둥에 깔 작은 새싹·꽃
     public int sortingOrder = 8;              // 나무·해바라기(7)보다 위
-    public float sortLift = 0.5f;             // 캐릭터 그림에서 발부터 한가운데까지의 높이
+    public int fenceGrassOrder = 3;           // 울타리 밑둥 풀은 캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
     public float baseOffset = 0.2f;           // 밑둥 그림 맨 아래에서 이만큼 위에 풀을 놓는다
     [Range(0f, 1f)] public float chance = 0.7f;
     public int seed = 7;
@@ -26,9 +26,9 @@ public class BaseGrass : MonoBehaviour
     private void Start()
     {
         random = new System.Random(seed);
-        Tilemap baseGrass = CreateTilemap();
+        Tilemap baseGrass = CreateTilemap("Base Grass", sortingOrder, TilemapRenderer.Mode.Chunk);
+        Tilemap fenceGrass = CreateTilemap("Fence Grass", fenceGrassOrder, TilemapRenderer.Mode.Individual);
         CollectObjectAreas();
-        AlignGrassSorting();
 
         if (fence != null)
         {
@@ -42,7 +42,7 @@ public class BaseGrass : MonoBehaviour
                 if (fence.GetTile(cell + Vector3Int.down) == fenceTile)
                     continue;
 
-                PutBaseGrass(baseGrass, fence, cell);
+                PutFenceGrass(fenceGrass, fence, cell);
             }
         }
 
@@ -60,16 +60,28 @@ public class BaseGrass : MonoBehaviour
         }
     }
 
-    private Tilemap CreateTilemap()
+    private Tilemap CreateTilemap(string name, int order, TilemapRenderer.Mode mode)
     {
-        var tilemapObject = new GameObject("Base Grass");
+        var tilemapObject = new GameObject(name);
         tilemapObject.transform.SetParent(transform, false);
         Tilemap tilemap = tilemapObject.AddComponent<Tilemap>();
         TilemapRenderer tilemapRenderer = tilemapObject.AddComponent<TilemapRenderer>();
         tilemapRenderer.sharedMaterial = grassRenderers[0].sharedMaterial;
         tilemapRenderer.sortingLayerID = grassRenderers[0].sortingLayerID;
-        tilemapRenderer.sortingOrder = sortingOrder;
+        tilemapRenderer.sortingOrder = order;
+        tilemapRenderer.mode = mode;
         return tilemap;
+    }
+
+    // 울타리 밑둥 풀. 캐릭터와 같은 층에 두므로 칸을 옮기지 않고 그대로 깐다.
+    private void PutFenceGrass(Tilemap fenceGrass, Tilemap source, Vector3Int cell)
+    {
+        if (random.NextDouble() > chance)
+            return;
+        if (CoveredByObject(BasePosition(source, cell, baseOffset), AreaOf(source, cell)))
+            return;
+
+        fenceGrass.SetTile(cell, tiles[random.Next(tiles.Length)]);
     }
 
     // 꽃·새싹 타일맵들에서 이 자리의 장식을 지운다
@@ -78,10 +90,7 @@ public class BaseGrass : MonoBehaviour
         foreach (TilemapRenderer grassRenderer in grassRenderers)
         {
             Tilemap grass = grassRenderer.GetComponent<Tilemap>();
-            // 꽃은 반 칸 올려 그리므로 이 자리에 걸치는 칸은 위아래 두 개다
-            Vector3Int cell = grass.WorldToCell(worldPosition);
-            grass.SetTile(cell, null);
-            grass.SetTile(cell + Vector3Int.down, null);
+            grass.SetTile(grass.WorldToCell(worldPosition), null);
         }
     }
 
@@ -94,30 +103,6 @@ public class BaseGrass : MonoBehaviour
             return;
 
         PlaceAtBase(baseGrass, source, cell, tiles[random.Next(tiles.Length)], baseOffset);
-    }
-
-    // 꽃·새싹은 칸 안에서 밑동이 바닥보다 조금 위에 그려져 있어, 캐릭터(발 기준)보다 앞뒤가 빨리 바뀐다.
-    // 그림을 칸 안에서 그만큼 내려, 꽃 밑동과 캐릭터 발 높이로 앞뒤가 정해지게 맞춘다.
-    private void AlignGrassSorting()
-    {
-        foreach (TilemapRenderer grassRenderer in grassRenderers)
-        {
-            Tilemap grass = grassRenderer.GetComponent<Tilemap>();
-            foreach (Vector3Int cell in grass.cellBounds.allPositionsWithin)
-            {
-                Align(grass, cell, sortLift);
-            }
-        }
-    }
-
-    public static void Align(Tilemap grass, Vector3Int cell, float lift)
-    {
-        Sprite sprite = grass.GetSprite(cell);
-        if (sprite == null)
-            return;
-
-        float shift = -OutlineOf(sprite).yMin - lift;
-        grass.SetTransformMatrix(cell, Matrix4x4.Translate(new Vector3(0f, shift, 0f)));
     }
 
     // 나무·해바라기·헛간 그림이 차지하는 자리를 모아 둔다

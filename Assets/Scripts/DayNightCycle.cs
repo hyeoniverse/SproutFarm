@@ -11,6 +11,7 @@ public class DayNightCycle : MonoBehaviour
     public float realSecondsPerGameMinute = 1f;
     public float hoursToExhaustion = 3f; // 쉬지 않고 걸으면 이 게임 시간이 지나 체력이 바닥난다
     public float idleDrainRatio = 0.5f;  // 가만히 있을 때는 걸을 때의 이 비율만큼만 닳는다
+    public float pathDrainRatio = 0.35f; // 흙길 위에서는 이 비율만큼만 닳는다
 
     public TMP_Text timeText;
     public TMP_Text dayText;
@@ -142,16 +143,18 @@ public class DayNightCycle : MonoBehaviour
     
     private void DecreasePlayerStamina()
     {
-        if (playerOnPath)
-            return; // 흙길 위에서는 체력이 닳지 않는다
-
         if (playerStatus != null)
         {
             // playerSpeed는 Player가 넘겨주는 배율 (걷기 1배, 달리기·피로가 쌓이면 그만큼 커진다)
             float baseStaminaDecreaseRate = 100f / (hoursToExhaustion * minutesPerHour); // 걸을 때 게임 1분마다 닳는 양
-            playerStatus.DecreaseStamina(playerSpeed != 0f
+            float decrease = playerSpeed != 0f
                 ? baseStaminaDecreaseRate * playerSpeed
-                : baseStaminaDecreaseRate * idleDrainRatio);
+                : baseStaminaDecreaseRate * idleDrainRatio;
+            if (playerOnPath)
+            {
+                decrease *= pathDrainRatio; // 흙길은 걷기 편해서 천천히 닳는다
+            }
+            playerStatus.DecreaseStamina(decrease);
         }
     }
 
