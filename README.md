@@ -11,15 +11,25 @@
 
 ## 게임 화면
 
-| 농장 | 들판 |
+| 도입 | 농장 |
 |------|------|
-| ![농장](docs/screenshot-farm.png) | ![들판](docs/screenshot-field.png) |
-| 집과 울타리. 안내 대화가 조작 방법을 알려줍니다. | 도망친 동물과 꽃·열매가 흩어져 있는 들판. |
+| ![도입](docs/screenshot-intro.png) | ![농장](docs/screenshot-farm.png) |
+| 파니가 상황을 설명해 줍니다. `SKIP▶▶`으로 건너뛸 수 있습니다. | 집과 울타리. 안내 대화가 조작 방법을 알려줍니다. |
 
-| 흙길 | 연못 |
+| 들판 | 흙길 |
 |------|------|
-| ![흙길](docs/screenshot-path.png) | ![연못](docs/screenshot-pond.png) |
-| 들판을 가로지르는 흙길. 위를 달리면 지치지 않고 빨라집니다. | 구역마다 생기는 연못. 물은 지나갈 수 없습니다. |
+| ![들판](docs/screenshot-field.png) | ![흙길](docs/screenshot-path.png) |
+| 도망친 동물과 꽃·열매가 흩어져 있는 들판. | 들판을 가로지르는 흙길. 위를 달리면 덜 지치고 빨라집니다. |
+
+| 연못 | 노을 |
+|------|------|
+| ![연못](docs/screenshot-pond.png) | ![노을](docs/screenshot-evening.png) |
+| 구역마다 생기는 연못. 물은 지나갈 수 없습니다. | 시간이 지나면 화면 색이 바뀝니다. 오후가 되면 노을이 집니다. |
+
+| 밤 | 결과와 랭킹 |
+|------|------|
+| ![밤](docs/screenshot-night.png) | ![결과](docs/screenshot-result.png) |
+| 밤에는 어두워지고, 체력이 떨어지면 나침반이 집을 가리킵니다. | 점수 내역과 TOP 10 랭킹. 이름을 넣어 기록을 올릴 수 있습니다. |
 
 ## 어떤 게임인가요?
 
