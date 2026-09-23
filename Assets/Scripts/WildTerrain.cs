@@ -135,8 +135,12 @@ public class WildTerrain : MonoBehaviour
         pondMap = CreateTilemap("Wild Pond", pondOrder, TilemapRenderer.Mode.Chunk, true);
         pondDecorMap = CreateTilemap("Wild Pond Decor", pondDecorOrder, TilemapRenderer.Mode.Chunk, false);
         flowerMap = CreateTilemap("Wild Flowers", flowerOrder, TilemapRenderer.Mode.Individual, false);
+        // 꽃 그림은 칸보다 높은 그림틀 아래쪽에 그려져 있다. 타일맵을 반 칸 올려야 그림이 제자리에 오고,
+        // 정렬 기준은 밑동보다 한 칸 위가 되어 캐릭터(발+0.5칸)보다 뒤로 가기 쉬워진다.
+        flowerMap.transform.localPosition = new Vector3(0f, 0.5f, 0f);
         objectMap = CreateTilemap("Wild Objects", objectOrder, TilemapRenderer.Mode.Individual, true);
         baseGrassMap = CreateTilemap("Wild Base Grass", baseGrassOrder, TilemapRenderer.Mode.Individual, false);
+        baseGrassMap.transform.localPosition = new Vector3(0f, 0.5f, 0f);
 
         groundDecorMaps = new Tilemap[groundDecor.Length];
         decorPositions = new Vector3[groundDecor.Length];

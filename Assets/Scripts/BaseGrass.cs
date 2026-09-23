@@ -74,6 +74,8 @@ public class BaseGrass : MonoBehaviour
         tilemapRenderer.sortingLayerID = grassRenderers[0].sortingLayerID;
         tilemapRenderer.sortingOrder = order;
         tilemapRenderer.mode = mode;
+        // 꽃 그림틀이 칸보다 높아서, 반 칸 올려야 그림이 제자리에 온다
+        tilemapObject.transform.localPosition = new Vector3(0f, 0.5f, 0f);
         return tilemap;
     }
 
@@ -176,7 +178,7 @@ public class BaseGrass : MonoBehaviour
     {
         Vector3 bottom = BasePosition(source, cell, offset);
 
-        Vector3Int target = baseGrass.WorldToCell(bottom);
+        var target = new Vector3Int(Mathf.FloorToInt(bottom.x), Mathf.FloorToInt(bottom.y), 0);
         if (baseGrass.HasTile(target))
             return;
 
