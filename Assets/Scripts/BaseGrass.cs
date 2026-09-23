@@ -51,8 +51,12 @@ public class BaseGrass : MonoBehaviour
             Tilemap tall = tallRenderer.GetComponent<Tilemap>();
             foreach (Vector3Int cell in tall.cellBounds.allPositionsWithin)
             {
+                if (tall.GetSprite(cell) == null)
+                    continue;
+
+                ClearUnder(tall, cell);
                 // 두 칸 이상을 차지하는 나무는 맨 아래 칸만 밑둥이다
-                if (tall.GetSprite(cell) != null && tall.GetSprite(cell + Vector3Int.down) == null)
+                if (tall.GetSprite(cell + Vector3Int.down) == null)
                 {
                     PutBaseGrass(baseGrass, tall, cell);
                 }
@@ -103,6 +107,19 @@ public class BaseGrass : MonoBehaviour
             return;
 
         PlaceAtBase(baseGrass, source, cell, tiles[random.Next(tiles.Length)], baseOffset);
+    }
+
+    // 나무 그림이 덮는 칸의 꽃·새싹을 치운다. 같은 칸에 있으면 앞뒤 기준이 같아 잎 위로 올라와 보인다.
+    private void ClearUnder(Tilemap source, Vector3Int cell)
+    {
+        Rect area = AreaOf(source, cell);
+        for (float y = area.yMin + 0.5f; y < area.yMax; y += 1f)
+        {
+            for (float x = area.xMin + 0.5f; x < area.xMax; x += 1f)
+            {
+                ClearGrass(new Vector3(x, y, 0f));
+            }
+        }
     }
 
     // 나무·해바라기·헛간 그림이 차지하는 자리를 모아 둔다
