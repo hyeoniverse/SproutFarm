@@ -13,6 +13,7 @@ public class BaseGrass : MonoBehaviour
     public TileBase fenceTile;                // 울타리 타일 (같은 타일맵의 벽 조각 등은 빼려고)
     public TilemapRenderer[] tallRenderers;   // 나무·해바라기 타일맵
     public TileBase[] tiles;                  // 밑둥에 깔 작은 새싹·꽃
+    public TileBase[] bannedTiles;            // 쓰지 않을 장식 (한 칸에 새싹이 둘 그려진 그림 등)
     public int sortingOrder = 3;              // 캐릭터와 같은 층 (밑동 높이로 앞뒤가 정해짐)
     public int fenceGrassOrder = 3;           // 울타리 밑둥 풀도 같은 층
     public float baseOffset = 0.2f;           // 밑둥 그림 맨 아래에서 이만큼 위에 풀을 놓는다
@@ -28,6 +29,7 @@ public class BaseGrass : MonoBehaviour
         random = new System.Random(seed);
         Tilemap baseGrass = CreateTilemap("Base Grass", sortingOrder, TilemapRenderer.Mode.Individual);
         Tilemap fenceGrass = CreateTilemap("Fence Grass", fenceGrassOrder, TilemapRenderer.Mode.Individual);
+        TidyGrass();
         CollectObjectAreas();
 
         if (fence != null)
@@ -88,6 +90,27 @@ public class BaseGrass : MonoBehaviour
             return;
 
         fenceGrass.SetTile(cell, tiles[random.Next(tiles.Length)]);
+    }
+
+    // 쓰지 않기로 한 장식과, 세로로 붙어 있는 꽃·새싹의 위쪽 것을 치운다.
+    // (위아래로 붙어 있으면 캐릭터가 아래 칸에 섰을 때 위 칸 그림이 몸에 걸친다)
+    private void TidyGrass()
+    {
+        foreach (TilemapRenderer grassRenderer in grassRenderers)
+        {
+            Tilemap grass = grassRenderer.GetComponent<Tilemap>();
+            foreach (Vector3Int cell in grass.cellBounds.allPositionsWithin)
+            {
+                TileBase tile = grass.GetTile(cell);
+                if (tile == null)
+                    continue;
+
+                if (System.Array.IndexOf(bannedTiles, tile) >= 0 || grass.GetTile(cell + Vector3Int.down) != null)
+                {
+                    grass.SetTile(cell, null);
+                }
+            }
+        }
     }
 
     // 꽃·새싹 타일맵들에서 이 자리의 장식을 지운다
