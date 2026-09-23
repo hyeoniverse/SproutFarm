@@ -41904,7 +41904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  chunkSize: 16
+  chunkSize: 12
   viewChunks: 1
   seed: 20260923
   homeArea:
