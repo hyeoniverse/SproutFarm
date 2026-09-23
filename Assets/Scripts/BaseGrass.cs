@@ -89,11 +89,15 @@ public class BaseGrass : MonoBehaviour
         if (CoveredByObject(BasePosition(source, cell, baseOffset), AreaOf(source, cell)))
             return;
 
+        Vector3 spot = source.GetCellCenterWorld(cell);
+        if (PlantAt(spot) || PlantAt(spot + Vector3.up) || PlantAt(spot + Vector3.down))
+            return;
+
         fenceGrass.SetTile(cell, tiles[random.Next(tiles.Length)]);
     }
 
-    // 쓰지 않기로 한 장식과, 세로로 붙어 있는 꽃·새싹의 위쪽 것을 치운다.
-    // (위아래로 붙어 있으면 캐릭터가 아래 칸에 섰을 때 위 칸 그림이 몸에 걸친다)
+    // 위아래로 붙어 있는 꽃·새싹은 아래 칸에 선 캐릭터 몸에 위 칸 그림이 걸친다.
+    // 층이 달라도 마찬가지라 모든 꽃 타일맵을 한꺼번에 보고 위쪽 것을 치운다.
     private void TidyGrass()
     {
         foreach (TilemapRenderer grassRenderer in grassRenderers)
@@ -101,16 +105,28 @@ public class BaseGrass : MonoBehaviour
             Tilemap grass = grassRenderer.GetComponent<Tilemap>();
             foreach (Vector3Int cell in grass.cellBounds.allPositionsWithin)
             {
-                TileBase tile = grass.GetTile(cell);
-                if (tile == null)
+                if (grass.GetTile(cell) == null)
                     continue;
 
-                if (System.Array.IndexOf(bannedTiles, tile) >= 0 || grass.GetTile(cell + Vector3Int.down) != null)
+                Vector3 here = grass.GetCellCenterWorld(cell);
+                if (System.Array.IndexOf(bannedTiles, grass.GetTile(cell)) >= 0 || PlantAt(here + Vector3.down))
                 {
                     grass.SetTile(cell, null);
                 }
             }
         }
+    }
+
+    // 이 자리에 꽃·새싹이 있는지 (어느 층이든)
+    public bool PlantAt(Vector3 worldPosition)
+    {
+        foreach (TilemapRenderer grassRenderer in grassRenderers)
+        {
+            Tilemap grass = grassRenderer.GetComponent<Tilemap>();
+            if (grass.GetTile(grass.WorldToCell(worldPosition)) != null)
+                return true;
+        }
+        return false;
     }
 
     // 꽃·새싹 타일맵들에서 이 자리의 장식을 지운다

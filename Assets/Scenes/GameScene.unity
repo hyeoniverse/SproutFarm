@@ -41933,6 +41933,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d7ee104e060ed3d499f72863fbbadc3b, type: 2}
   flowers:
   - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
+  - {fileID: 11400000, guid: 7cd033f47963464438ad95b819a8f72b, type: 2}
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
   - {fileID: 11400000, guid: 38af2e20ada257d4b8a370c6bfacf6d7, type: 2}
   - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
@@ -42146,8 +42147,7 @@ MonoBehaviour:
   - {fileID: 2100000044}
   - {fileID: 240457000}
   - {fileID: 1975585777}
-  bannedTiles:
-  - {fileID: 11400000, guid: 7cd033f47963464438ad95b819a8f72b, type: 2}
+  bannedTiles: []
   tiles:
   - {fileID: 11400000, guid: 628812abbe4115b4cb47cb924a590349, type: 2}
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
