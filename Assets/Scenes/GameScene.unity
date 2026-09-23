@@ -8102,7 +8102,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -17990,7 +17990,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -42084,9 +42084,9 @@ MonoBehaviour:
   homePathFrom: {x: -5, y: 2}
   homePathWidth: 1.2
   pondDecorOrder: -8
-  flowerOrder: 3
+  flowerOrder: 2
   objectOrder: 3
-  baseGrassOrder: 3
+  baseGrassOrder: 2
   baseOffset: 0.2
 --- !u!1 &2100000061
 GameObject:
@@ -42152,7 +42152,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
   - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
   - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
-  sortingOrder: 3
+  sortingOrder: 2
   baseOffset: 0.2
   chance: 0.45
   seed: 7
@@ -54552,7 +54552,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -65616,7 +65616,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 3
+  m_SortingOrder: 2
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16

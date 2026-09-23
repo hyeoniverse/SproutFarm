@@ -35,9 +35,9 @@ public class WildTerrain : MonoBehaviour
     public int pathOrder = -9;               // 땅 위, 꽃 아래
     public int pondOrder = -9;               // 땅 위, 울타리 아래
     public int pondDecorOrder = -8;          // 물 위에 뜨는 수련잎
-    public int flowerOrder = 3;              // 캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
+    public int flowerOrder = 2;              // 캐릭터(3)보다 한 단계 아래 — 새싹·꽃은 늘 캐릭터 뒤에 그린다
     public int objectOrder = 3;              // 나무·캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
-    public int baseGrassOrder = 3;           // 나무 밑둥에 깔리는 풀 (같은 층, 밑둥보다 아래라 앞에 보인다)
+    public int baseGrassOrder = 2;           // 밑둥 풀도 캐릭터 뒤
     public float baseOffset = 0.2f;
 
     // 물가 그림 고르기: [왼위, 위, 오른위, 왼, 오른, 왼아래, 아래, 오른아래]에 물이 보이면 w, 풀이면 G
