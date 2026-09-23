@@ -9,7 +9,7 @@ using UnityEngine.Tilemaps;
 public class WildTerrain : MonoBehaviour
 {
     public Transform player;
-    public int chunkSize = 20;
+    public int chunkSize = 16;
     public int viewChunks = 1;   // 플레이어가 있는 구역에서 이 칸 수만큼 둘레까지 만들어 둔다
     public int seed = 20260923;
     public RectInt homeArea = new RectInt(-22, -22, 44, 44); // 집·울타리·밭 둘레: 여기는 건드리지 않는다
@@ -23,6 +23,7 @@ public class WildTerrain : MonoBehaviour
     public TileBase[] flowers;    // 꽃, 새싹
     public TileBase sunflower;
     public TileBase[] baseGrass;  // 나무·해바라기 밑둥에 깔 작은 풀
+    public Sprite[] pathSprites;  // Tilled_Dirt.png의 흙길 그림들 (Grass.png와 같은 순서)
     public TileBase pondWater;    // 물 (부딪히는 타일)
     public TileBase[] lilyPads;
     public Sprite[] shoreSprites; // Grass.png의 물가 그림들 (Grass_0부터 차례대로)
@@ -30,12 +31,14 @@ public class WildTerrain : MonoBehaviour
 
     [Header("그리는 순서")]
     public TilemapRenderer rendererTemplate; // 재질·정렬 레이어를 가져올 타일맵
+    public int pathOrder = -9;               // 땅 위, 꽃 아래
     public int pondOrder = -9;               // 땅 위, 울타리 아래
     public int pondDecorOrder = -8;          // 물 위에 뜨는 수련잎
     public int flowerOrder = 3;              // 캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
     public int objectOrder = 7;              // 나무와 같은 층 (캐릭터보다 위)
     public int baseGrassOrder = 8;           // 나무 밑둥에 깔리는 풀 (나무보다 위)
     public float baseOffset = 0.2f;
+    public float sortLift = 0.5f;            // 캐릭터 그림에서 발부터 한가운데까지의 높이
 
     // 물가 그림 고르기: [왼위, 위, 오른위, 왼, 오른, 왼아래, 아래, 오른아래]에 물이 보이면 w, 풀이면 G
     private static readonly Dictionary<string, int> ShoreLookup = new Dictionary<string, int>
@@ -52,7 +55,22 @@ public class WildTerrain : MonoBehaviour
         { "wGwGwwGw", 49 }, { "wGwGGwGw", 50 },
     };
 
+    [Header("길")]
+    public int pathSpacing = 24;   // 길 사이 간격
+    public float pathWidth = 1.2f; // 길 반폭
+
     private enum Theme { Woods, Rocky, Meadow, Orchard, Pond, Clearing }
+
+    // 구역마다 뽑는 풍경. 연못과 숲·꽃밭을 자주 만나도록 여러 번 넣어 뒀다.
+    private static readonly Theme[] ThemeBag =
+    {
+        Theme.Woods, Theme.Woods, Theme.Woods,
+        Theme.Rocky, Theme.Rocky,
+        Theme.Meadow, Theme.Meadow, Theme.Meadow,
+        Theme.Orchard, Theme.Orchard,
+        Theme.Pond, Theme.Pond, Theme.Pond,
+        Theme.Clearing,
+    };
 
     // 물을 판 자리에 원래 있던 꽃·새싹. 물 위에 뜬 것처럼 보이므로 치워 뒀다가, 구역을 지울 때 되돌려 놓는다.
     private struct RemovedTile
@@ -60,8 +78,10 @@ public class WildTerrain : MonoBehaviour
         public Tilemap map;
         public Vector3Int cell;
         public TileBase tile;
+        public Matrix4x4 transform;
     }
 
+    private Tilemap pathMap;
     private Tilemap pondMap;
     private Tilemap pondDecorMap;
     private Tilemap flowerMap;
@@ -70,9 +90,10 @@ public class WildTerrain : MonoBehaviour
     private Tilemap[] groundDecorMaps;
     private Vector3[] decorPositions;
     private readonly List<RemovedTile> removedDecor = new List<RemovedTile>();
-    private readonly Dictionary<Vector2Int, List<Vector2Int>> pondCells = new Dictionary<Vector2Int, List<Vector2Int>>();
+    private readonly Dictionary<Vector2Int, List<Vector2Int>> hiddenByChunk = new Dictionary<Vector2Int, List<Vector2Int>>();
     private readonly HashSet<Vector2Int> hiddenCells = new HashSet<Vector2Int>();
     private readonly Dictionary<int, Tile> shoreTiles = new Dictionary<int, Tile>();
+    private readonly Dictionary<int, Tile> pathTiles = new Dictionary<int, Tile>();
     private readonly HashSet<Vector2Int> builtChunks = new HashSet<Vector2Int>();
     private readonly Queue<Vector2Int> toBuild = new Queue<Vector2Int>();
     private readonly Queue<Vector2Int> toClear = new Queue<Vector2Int>();
@@ -84,6 +105,7 @@ public class WildTerrain : MonoBehaviour
         {
             player = GameManager.instance.player.transform;
         }
+        pathMap = CreateTilemap("Wild Path", pathOrder, TilemapRenderer.Mode.Chunk, false);
         pondMap = CreateTilemap("Wild Pond", pondOrder, TilemapRenderer.Mode.Chunk, true);
         pondDecorMap = CreateTilemap("Wild Pond Decor", pondDecorOrder, TilemapRenderer.Mode.Chunk, false);
         flowerMap = CreateTilemap("Wild Flowers", flowerOrder, TilemapRenderer.Mode.Individual, false);
@@ -182,20 +204,21 @@ public class WildTerrain : MonoBehaviour
     {
         foreach (Vector3Int cell in CellsOf(chunk))
         {
+            pathMap.SetTile(cell, null);
             pondMap.SetTile(cell, null);
             pondDecorMap.SetTile(cell, null);
             flowerMap.SetTile(cell, null);
             objectMap.SetTile(cell, null);
             baseGrassMap.SetTile(cell, null);
         }
-        if (pondCells.TryGetValue(chunk, out List<Vector2Int> cells))
+        if (hiddenByChunk.TryGetValue(chunk, out List<Vector2Int> cells))
         {
             RestoreDecor();
             foreach (Vector2Int cell in cells)
             {
                 hiddenCells.Remove(cell);
             }
-            pondCells.Remove(chunk);
+            hiddenByChunk.Remove(chunk);
             HideDecor();
         }
         RescanPaths(chunk);
@@ -204,9 +227,10 @@ public class WildTerrain : MonoBehaviour
     private void Build(Vector2Int chunk)
     {
         var random = new System.Random(seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663));
-        Theme theme = (Theme)random.Next(System.Enum.GetValues(typeof(Theme)).Length);
+        Theme theme = ThemeBag[random.Next(ThemeBag.Length)];
         var taken = new HashSet<Vector3Int>();
         var water = new HashSet<Vector2Int>();
+        var path = new HashSet<Vector2Int>();
 
         // 서로 spacing칸 안에는 겹쳐 두지 않고, 물가에는 두지 않는다
         void Put(Tilemap tilemap, Vector3Int cell, TileBase tile, int spacing)
@@ -226,6 +250,10 @@ public class WildTerrain : MonoBehaviour
                 return;
 
             tilemap.SetTile(cell, tile);
+            if (tilemap == flowerMap)
+            {
+                BaseGrass.Align(flowerMap, cell, sortLift);
+            }
             taken.Add(cell);
             // 나무·해바라기는 밑둥 자리에 작은 풀을 깔아, 밑둥 쪽만 풀이 앞에 보이게 한다
             if (tilemap == objectMap && baseGrass.Length > 0 && random.NextDouble() < 0.5)
@@ -240,10 +268,22 @@ public class WildTerrain : MonoBehaviour
         {
             DigPond(chunk, random, water);
         }
+        DrawPath(chunk, water, path);
+
+        // 물과 길 위에 놓여 있던 꽃·새싹은 치워 둔다 (물에 뜨거나 길을 덮어 보이지 않게)
+        var hidden = new List<Vector2Int>(water);
+        hidden.AddRange(path);
+        if (hidden.Count > 0)
+        {
+            hiddenByChunk[chunk] = hidden;
+            hiddenCells.UnionWith(hidden);
+            HideDecor();
+        }
 
         foreach (Vector3Int cell in CellsOf(chunk))
         {
-            if (homeArea.Contains(new Vector2Int(cell.x, cell.y)) || water.Contains(new Vector2Int(cell.x, cell.y)))
+            var spot = new Vector2Int(cell.x, cell.y);
+            if (homeArea.Contains(spot) || water.Contains(spot) || path.Contains(spot))
                 continue;
 
             double roll = random.NextDouble();
@@ -307,6 +347,94 @@ public class WildTerrain : MonoBehaviour
         RescanPaths(chunk);
     }
 
+    // 구불구불한 흙길을 깐다. 길 자리는 세계 좌표만으로 정해지므로 구역이 바뀌어도 끊기지 않고 이어진다.
+    private void DrawPath(Vector2Int chunk, HashSet<Vector2Int> water, HashSet<Vector2Int> path)
+    {
+        if (pathSprites == null || pathSprites.Length == 0)
+            return;
+
+        foreach (Vector3Int cell in CellsOf(chunk))
+        {
+            var here = new Vector2Int(cell.x, cell.y);
+            if (homeArea.Contains(here) || water.Contains(here) || !OnPath(cell.x, cell.y))
+                continue;
+
+            path.Add(here);
+        }
+
+        // 가장자리가 둥글게 보이도록, 옆 칸도 길인지에 따라 흙 그림을 고른다
+        foreach (Vector2Int cell in path)
+        {
+            bool Dirt(int dx, int dy)
+            {
+                int x = cell.x + dx;
+                int y = cell.y + dy;
+                return OnPath(x, y) && !homeArea.Contains(new Vector2Int(x, y)) && !water.Contains(new Vector2Int(x, y));
+            }
+
+            if (BlobLookup(Dirt, out int sprite) && sprite < pathSprites.Length)
+            {
+                pathMap.SetTile(new Vector3Int(cell.x, cell.y, 0), BlobTile(pathTiles, pathSprites, sprite));
+            }
+        }
+    }
+
+    // 여덟 이웃이 같은 바닥인지 보고 47조각 타일셋에서 맞는 그림을 고른다
+    private static bool BlobLookup(System.Func<int, int, bool> same, out int sprite)
+    {
+        bool top = same(0, 1);
+        bool bottom = same(0, -1);
+        bool left = same(-1, 0);
+        bool right = same(1, 0);
+        char Side(bool isSame) => isSame ? 'G' : 'w';
+        string look = new string(new[]
+        {
+            Side(top && left && same(-1, 1)),
+            Side(top),
+            Side(top && right && same(1, 1)),
+            Side(left),
+            Side(right),
+            Side(bottom && left && same(-1, -1)),
+            Side(bottom),
+            Side(bottom && right && same(1, -1)),
+        });
+        return ShoreLookup.TryGetValue(look, out sprite);
+    }
+
+    private static Tile BlobTile(Dictionary<int, Tile> cache, Sprite[] sprites, int sprite)
+    {
+        if (cache.TryGetValue(sprite, out Tile tile))
+            return tile;
+
+        tile = ScriptableObject.CreateInstance<Tile>();
+        tile.sprite = sprites[sprite];
+        tile.flags = TileFlags.LockAll;
+        tile.colliderType = Tile.ColliderType.None;
+        cache[sprite] = tile;
+        return tile;
+    }
+
+    // pathSpacing칸마다 가로·세로로 길이 지나가고, 사인 곡선만큼 휘어진다
+    private bool OnPath(int x, int y)
+    {
+        int row = Mathf.RoundToInt((float)y / pathSpacing);
+        for (int k = row - 1; k <= row + 1; k++)
+        {
+            float center = k * pathSpacing + 3.5f * Mathf.Sin(x * 0.09f + k * 2.3f);
+            if (Mathf.Abs(y - center) <= pathWidth)
+                return true;
+        }
+
+        int column = Mathf.RoundToInt((float)x / pathSpacing);
+        for (int k = column - 1; k <= column + 1; k++)
+        {
+            float center = k * pathSpacing + 3.5f * Mathf.Sin(y * 0.09f + k * 1.7f);
+            if (Mathf.Abs(x - center) <= pathWidth)
+                return true;
+        }
+        return false;
+    }
+
     // 구역 안쪽에 둥근 물웅덩이를 파고, 물에 닿는 땅에는 물가 그림을 깐다
     private void DigPond(Vector2Int chunk, System.Random random, HashSet<Vector2Int> water)
     {
@@ -342,11 +470,6 @@ public class WildTerrain : MonoBehaviour
                 }
             }
         }
-
-        // 물 자리에 원래 깔려 있던 꽃·새싹은 치워 둔다
-        pondCells[chunk] = new List<Vector2Int>(water);
-        hiddenCells.UnionWith(water);
-        HideDecor();
 
         foreach (Vector2Int cell in water)
         {
@@ -416,16 +539,22 @@ public class WildTerrain : MonoBehaviour
     {
         foreach (Tilemap decor in groundDecorMaps)
         {
-            if (decor.GetTile(DecorCell(decor, cell)) != null)
-                return decor;
+            foreach (Vector3Int decorCell in DecorCells(decor, cell))
+            {
+                if (decor.GetTile(decorCell) != null)
+                    return decor;
+            }
         }
         return null;
     }
 
-    // 꽃·새싹 타일맵은 무한 맵을 따라 움직이므로, 세계 좌표로 칸을 찾는다
-    private static Vector3Int DecorCell(Tilemap decor, Vector3Int cell)
+    // 꽃·새싹 타일맵은 무한 맵을 따라 움직이고 반 칸 올려 그리므로,
+    // 이 자리에 겹쳐 보이는 칸은 위아래 두 개다.
+    private static IEnumerable<Vector3Int> DecorCells(Tilemap decor, Vector3Int cell)
     {
-        return decor.WorldToCell(new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f));
+        Vector3Int here = decor.WorldToCell(new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f));
+        yield return here;
+        yield return here + Vector3Int.down;
     }
 
     // 물이 들어찬 자리의 꽃·새싹을 치운다 (물 위에 꽃이 떠 있는 것처럼 보이지 않게)
@@ -436,13 +565,15 @@ public class WildTerrain : MonoBehaviour
             var here = new Vector3Int(cell.x, cell.y, 0);
             foreach (Tilemap decor in groundDecorMaps)
             {
-                Vector3Int decorCell = DecorCell(decor, here);
-                TileBase tile = decor.GetTile(decorCell);
-                if (tile == null)
-                    continue;
+                foreach (Vector3Int decorCell in DecorCells(decor, here))
+                {
+                    TileBase tile = decor.GetTile(decorCell);
+                    if (tile == null)
+                        continue;
 
-                removedDecor.Add(new RemovedTile { map = decor, cell = decorCell, tile = tile });
-                decor.SetTile(decorCell, null);
+                    removedDecor.Add(new RemovedTile { map = decor, cell = decorCell, tile = tile, transform = decor.GetTransformMatrix(decorCell) });
+                    decor.SetTile(decorCell, null);
+                }
             }
         }
     }
@@ -453,6 +584,7 @@ public class WildTerrain : MonoBehaviour
         foreach (RemovedTile item in removedDecor)
         {
             item.map.SetTile(item.cell, item.tile);
+            item.map.SetTransformMatrix(item.cell, item.transform);
         }
         removedDecor.Clear();
     }

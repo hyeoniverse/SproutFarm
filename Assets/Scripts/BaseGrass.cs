@@ -14,17 +14,21 @@ public class BaseGrass : MonoBehaviour
     public TilemapRenderer[] tallRenderers;   // 나무·해바라기 타일맵
     public TileBase[] tiles;                  // 밑둥에 깔 작은 새싹·꽃
     public int sortingOrder = 8;              // 나무·해바라기(7)보다 위
+    public float sortLift = 0.5f;             // 캐릭터 그림에서 발부터 한가운데까지의 높이
     public float baseOffset = 0.2f;           // 밑둥 그림 맨 아래에서 이만큼 위에 풀을 놓는다
     [Range(0f, 1f)] public float chance = 0.7f;
     public int seed = 7;
 
     private static readonly Dictionary<Sprite, Rect> spriteOutlines = new Dictionary<Sprite, Rect>();
     private System.Random random;
+    private readonly List<Rect> objectAreas = new List<Rect>(); // 나무·헛간 그림이 차지하는 자리
 
     private void Start()
     {
         random = new System.Random(seed);
         Tilemap baseGrass = CreateTilemap();
+        CollectObjectAreas();
+        AlignGrassSorting();
 
         if (fence != null)
         {
@@ -74,7 +78,10 @@ public class BaseGrass : MonoBehaviour
         foreach (TilemapRenderer grassRenderer in grassRenderers)
         {
             Tilemap grass = grassRenderer.GetComponent<Tilemap>();
-            grass.SetTile(grass.WorldToCell(worldPosition), null);
+            // 꽃은 반 칸 올려 그리므로 이 자리에 걸치는 칸은 위아래 두 개다
+            Vector3Int cell = grass.WorldToCell(worldPosition);
+            grass.SetTile(cell, null);
+            grass.SetTile(cell + Vector3Int.down, null);
         }
     }
 
@@ -82,16 +89,90 @@ public class BaseGrass : MonoBehaviour
     {
         if (random.NextDouble() > chance)
             return;
+        // 이웃한 나무 잎이나 헛간 위에 풀이 얹히면 그림을 가려 어색하다
+        if (CoveredByObject(BasePosition(source, cell, baseOffset), AreaOf(source, cell)))
+            return;
 
         PlaceAtBase(baseGrass, source, cell, tiles[random.Next(tiles.Length)], baseOffset);
+    }
+
+    // 꽃·새싹은 칸 안에서 밑동이 바닥보다 조금 위에 그려져 있어, 캐릭터(발 기준)보다 앞뒤가 빨리 바뀐다.
+    // 그림을 칸 안에서 그만큼 내려, 꽃 밑동과 캐릭터 발 높이로 앞뒤가 정해지게 맞춘다.
+    private void AlignGrassSorting()
+    {
+        foreach (TilemapRenderer grassRenderer in grassRenderers)
+        {
+            Tilemap grass = grassRenderer.GetComponent<Tilemap>();
+            foreach (Vector3Int cell in grass.cellBounds.allPositionsWithin)
+            {
+                Align(grass, cell, sortLift);
+            }
+        }
+    }
+
+    public static void Align(Tilemap grass, Vector3Int cell, float lift)
+    {
+        Sprite sprite = grass.GetSprite(cell);
+        if (sprite == null)
+            return;
+
+        float shift = -OutlineOf(sprite).yMin - lift;
+        grass.SetTransformMatrix(cell, Matrix4x4.Translate(new Vector3(0f, shift, 0f)));
+    }
+
+    // 나무·해바라기·헛간 그림이 차지하는 자리를 모아 둔다
+    private void CollectObjectAreas()
+    {
+        foreach (TilemapRenderer tallRenderer in tallRenderers)
+        {
+            Tilemap tall = tallRenderer.GetComponent<Tilemap>();
+            foreach (Vector3Int cell in tall.cellBounds.allPositionsWithin)
+            {
+                if (tall.GetSprite(cell) != null)
+                {
+                    objectAreas.Add(AreaOf(tall, cell));
+                }
+            }
+        }
+    }
+
+    private bool CoveredByObject(Vector3 position, Rect own)
+    {
+        foreach (Rect area in objectAreas)
+        {
+            if (area == own)
+                continue;
+            if (area.Contains(position))
+                return true;
+        }
+        return false;
+    }
+
+    // 이 칸의 그림이 실제로 덮는 자리 (세계 좌표)
+    private static Rect AreaOf(Tilemap source, Vector3Int cell)
+    {
+        Sprite sprite = source.GetSprite(cell);
+        if (sprite == null)
+            return Rect.zero;
+
+        Rect outline = OutlineOf(sprite);
+        Vector3 shift = source.GetTransformMatrix(cell).GetColumn(3);
+        Vector3 origin = source.GetCellCenterWorld(cell) + shift;
+        return new Rect(origin.x + outline.xMin, origin.y + outline.yMin, outline.width, outline.height);
+    }
+
+    // source의 cell에 있는 그림 맨 아래(밑둥) 자리
+    public static Vector3 BasePosition(Tilemap source, Vector3Int cell, float offset)
+    {
+        Rect outline = OutlineOf(source.GetSprite(cell));
+        Vector3 shift = source.GetTransformMatrix(cell).GetColumn(3);
+        return source.GetCellCenterWorld(cell) + shift + new Vector3(outline.center.x, outline.yMin + offset, 0f);
     }
 
     // source의 cell에 있는 그림 맨 아래(밑둥) 높이에 맞춰 baseGrass에 작은 풀 타일을 놓는다
     public static void PlaceAtBase(Tilemap baseGrass, Tilemap source, Vector3Int cell, TileBase tile, float offset)
     {
-        Rect outline = OutlineOf(source.GetSprite(cell));
-        Vector3 shift = source.GetTransformMatrix(cell).GetColumn(3);
-        Vector3 bottom = source.GetCellCenterWorld(cell) + shift + new Vector3(outline.center.x, outline.yMin + offset, 0f);
+        Vector3 bottom = BasePosition(source, cell, offset);
 
         Vector3Int target = baseGrass.WorldToCell(bottom);
         if (baseGrass.HasTile(target))

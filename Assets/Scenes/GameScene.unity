@@ -8017,7 +8017,7 @@ Transform:
   m_GameObject: {fileID: 551131969}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10, y: 10.5, z: 0}
+  m_LocalPosition: {x: 10, y: 10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11624,7 +11624,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 20, y: 20, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -17905,7 +17905,7 @@ Transform:
   m_GameObject: {fileID: 693804491}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: 10.5, z: 0}
+  m_LocalPosition: {x: -10, y: 10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21442,7 +21442,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 20, y: 20, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -41904,7 +41904,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  chunkSize: 20
+  chunkSize: 16
   viewChunks: 1
   seed: 20260923
   homeArea:
@@ -41945,6 +41945,59 @@ MonoBehaviour:
   - {fileID: 11400000, guid: df0f24cb7e643d8448cbcaad78fca003, type: 2}
   - {fileID: 11400000, guid: 5d7077793d15f954da785fe5e8e4aeda, type: 2}
   - {fileID: 11400000, guid: 20fb96c81677d734887fe6abc5c2ee87, type: 2}
+  pathSprites:
+  - {fileID: -224326424, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 838293544, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 622369910, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1650335867, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 367674234, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1293404124, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1722800347, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 494092096, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -910755895, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -740078585, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 120979426, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1977059285, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1350167784, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1358742733, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1102841848, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -568838414, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1927915708, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 578186122, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1668831024, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -641169824, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -161648089, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1497541845, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 801601705, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1719732440, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 849612114, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -2037120992, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1945539475, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -113116703, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1251983474, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1943804165, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -782812677, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1725319615, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1802320767, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 566510408, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 423912756, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1647381586, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -584285711, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1725880641, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1598439513, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 436451958, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1626897589, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -466620507, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1916409671, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1773807728, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 838235385, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -11497182, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -582302906, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -188308542, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -1419975233, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -587461562, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: -955212575, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
+  - {fileID: 1073208652, guid: 4493a84b1af8c0546a06f46e91843a66, type: 3}
   pondWater: {fileID: 11400000, guid: f5c7994213cce4378b45b88c734896dd, type: 2}
   lilyPads:
   - {fileID: 11400000, guid: 6193d896059d2a54ab703997fcc1c7de, type: 2}
@@ -42008,7 +42061,10 @@ MonoBehaviour:
   - {fileID: 1995019677}
   - {fileID: 1778504142}
   rendererTemplate: {fileID: 175265753}
+  pathOrder: -9
   pondOrder: -9
+  pathSpacing: 24
+  pathWidth: 1.2
   pondDecorOrder: -8
   flowerOrder: 3
   objectOrder: 7
@@ -54393,7 +54449,7 @@ Transform:
   m_GameObject: {fileID: 1778504136}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10, y: -9.5, z: 0}
+  m_LocalPosition: {x: 10, y: -10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -58550,7 +58606,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -12, y: -10, z: 0}
   m_Size: {x: 22, y: 24, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -65457,7 +65513,7 @@ Transform:
   m_GameObject: {fileID: 1995019671}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10, y: -9.5, z: 0}
+  m_LocalPosition: {x: -10, y: -10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -69616,7 +69672,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: -10, y: -10, z: 0}
   m_Size: {x: 26, y: 23, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0, z: 0}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
