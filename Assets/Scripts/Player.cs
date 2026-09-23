@@ -49,6 +49,10 @@ public class Player : MonoBehaviour
     private float continuousMoveTime;
     // 체력이 떨어질수록 느려짐: 체력이 0이면 원래 속도의 minStaminaSpeedRatio배 (그보다 느려지지는 않음)
     public float minStaminaSpeedRatio = 0.6f;
+
+    // 흙길 위에서는 걷기·달리기가 이 배율만큼 빨라지고 체력이 닳지 않는다
+    public float pathSpeedMultiplier = 1.25f;
+    public float feetOffset = 0.4f;   // 캐릭터 기준점에서 발까지의 높이
     // 열매를 먹으면 잠깐 빨라짐
     public float berrySpeedMultiplier = 1.5f;
     public float berrySpeedDuration = 4f;
@@ -196,6 +200,13 @@ public class Player : MonoBehaviour
             currentSpeed *= berrySpeedMultiplier;
         }
 
+        // 흙길 위에서는 조금 더 빠르고 체력도 닳지 않는다
+        bool onPath = WildTerrain.OnPathAt(transform.position + Vector3.down * feetOffset);
+        if (onPath)
+        {
+            currentSpeed *= pathSpeedMultiplier;
+        }
+
         // 쉬지 않고 움직인 시간만큼 피로가 쌓이고, 멈춰 있으면 풀림
         continuousMoveTime = isMoving
             ? Mathf.Min(fatigueRampSeconds, continuousMoveTime + Time.deltaTime)
@@ -205,6 +216,7 @@ public class Player : MonoBehaviour
         // 체력은 실제로 움직일 때만 더 닳게 하고, 걷기를 1배로 두고 달리기는 runDrainMultiplier배로 닳게 한 뒤 피로 배율을 곱함
         float staminaFactor = isMoving ? (isRunning ? runDrainMultiplier : 1f) * fatigue : 0f;
         dayNightCycle.UpdatePlayerSpeed(staminaFactor);
+        dayNightCycle.SetOnPath(onPath);
     }
 
     // 열매를 먹으면 berrySpeedDuration초 동안 berrySpeedMultiplier배로 빨라짐

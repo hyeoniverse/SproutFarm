@@ -42064,7 +42064,9 @@ MonoBehaviour:
   pathOrder: -9
   pondOrder: -9
   pathSpacing: 24
-  pathWidth: 1.2
+  pathWidth: 1.8
+  pathWander: 2.5
+  pathCurve: 0.055
   pondDecorOrder: -8
   flowerOrder: 3
   objectOrder: 7

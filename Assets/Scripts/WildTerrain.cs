@@ -56,8 +56,10 @@ public class WildTerrain : MonoBehaviour
     };
 
     [Header("길")]
-    public int pathSpacing = 24;   // 길 사이 간격
-    public float pathWidth = 1.2f; // 길 반폭
+    public int pathSpacing = 24;    // 길 사이 간격
+    public float pathWidth = 1.8f;  // 길 반폭 (네 칸쯤)
+    public float pathWander = 2.5f; // 길이 휘어지는 폭
+    public float pathCurve = 0.055f; // 길이 휘어지는 빠르기
 
     private enum Theme { Woods, Rocky, Meadow, Orchard, Pond, Clearing }
 
@@ -98,6 +100,12 @@ public class WildTerrain : MonoBehaviour
     private readonly Queue<Vector2Int> toBuild = new Queue<Vector2Int>();
     private readonly Queue<Vector2Int> toClear = new Queue<Vector2Int>();
     private Vector2Int center = new Vector2Int(int.MinValue, int.MinValue);
+    private static WildTerrain current;
+
+    private void Awake()
+    {
+        current = this;
+    }
 
     private void Start()
     {
@@ -414,13 +422,21 @@ public class WildTerrain : MonoBehaviour
         return tile;
     }
 
-    // pathSpacing칸마다 가로·세로로 길이 지나가고, 사인 곡선만큼 휘어진다
+    // 비스듬히 꺾이는 곳에서 폭이 좁아지면 길이 끊겨 보이므로, 양옆이 길이면 가운데도 길로 친다
     private bool OnPath(int x, int y)
+    {
+        return OnPathBand(x, y)
+            || (OnPathBand(x - 1, y) && OnPathBand(x + 1, y))
+            || (OnPathBand(x, y - 1) && OnPathBand(x, y + 1));
+    }
+
+    // pathSpacing칸마다 가로·세로로 길이 지나가고, 사인 곡선만큼 완만하게 휘어진다
+    private bool OnPathBand(int x, int y)
     {
         int row = Mathf.RoundToInt((float)y / pathSpacing);
         for (int k = row - 1; k <= row + 1; k++)
         {
-            float center = k * pathSpacing + 3.5f * Mathf.Sin(x * 0.09f + k * 2.3f);
+            float center = k * pathSpacing + pathWander * Mathf.Sin(x * pathCurve + k * 2.3f);
             if (Mathf.Abs(y - center) <= pathWidth)
                 return true;
         }
@@ -428,11 +444,20 @@ public class WildTerrain : MonoBehaviour
         int column = Mathf.RoundToInt((float)x / pathSpacing);
         for (int k = column - 1; k <= column + 1; k++)
         {
-            float center = k * pathSpacing + 3.5f * Mathf.Sin(y * 0.09f + k * 1.7f);
+            float center = k * pathSpacing + pathWander * Mathf.Sin(y * pathCurve + k * 1.7f);
             if (Mathf.Abs(x - center) <= pathWidth)
                 return true;
         }
         return false;
+    }
+
+    // 길 위에 서 있는지 (길 위에서는 빨리 걷고 체력이 닳지 않는다)
+    public static bool OnPathAt(Vector3 position)
+    {
+        if (current == null || current.pathMap == null)
+            return false;
+
+        return current.pathMap.GetTile(current.pathMap.WorldToCell(position)) != null;
     }
 
     // 구역 안쪽에 둥근 물웅덩이를 파고, 물에 닿는 땅에는 물가 그림을 깐다

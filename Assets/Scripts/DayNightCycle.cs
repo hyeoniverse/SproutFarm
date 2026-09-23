@@ -24,6 +24,7 @@ public class DayNightCycle : MonoBehaviour
     private PlayerStatus playerStatus;
 
     private float playerSpeed = 0f;
+    private bool playerOnPath = false;
 
     private void Awake()
     {
@@ -141,6 +142,9 @@ public class DayNightCycle : MonoBehaviour
     
     private void DecreasePlayerStamina()
     {
+        if (playerOnPath)
+            return; // 흙길 위에서는 체력이 닳지 않는다
+
         if (playerStatus != null)
         {
             // playerSpeed는 Player가 넘겨주는 배율 (걷기 1배, 달리기·피로가 쌓이면 그만큼 커진다)
@@ -154,6 +158,11 @@ public class DayNightCycle : MonoBehaviour
     public void UpdatePlayerSpeed(float speed)
     {
         playerSpeed = speed;
+    }
+
+    public void SetOnPath(bool value)
+    {
+        playerOnPath = value;
     }
 
     public int GetCurrentDay() => currentDay;
