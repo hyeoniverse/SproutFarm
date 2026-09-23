@@ -60,10 +60,25 @@ public class WildTerrain : MonoBehaviour
     public float pathWidth = 1.8f;  // 길 반폭 (네 칸쯤)
     public float pathWander = 2.5f; // 길이 휘어지는 폭
     public float pathCurve = 0.055f; // 길이 휘어지는 빠르기
+    public int cellsPerFrame = 48;   // 한 프레임에 꾸미는 칸 수 (끊김을 줄이려고 나눠 처리한다)
     public Vector2Int homePathFrom = new Vector2Int(-5, -4); // 집 앞에서 시작해 남쪽 큰길까지 이어지는 진입로
     public float homePathWidth = 1.2f;
 
     private enum Theme { Woods, Rocky, Meadow, Orchard, Pond, Clearing }
+
+    // 만들고 있는 구역의 진행 상태
+    private sealed class BuildState
+    {
+        public Vector2Int chunk;
+        public System.Random random;
+        public Theme theme;
+        public List<Vector3Int> cells;
+        public int index;
+        public bool solidChanged;
+        public readonly HashSet<Vector3Int> taken = new HashSet<Vector3Int>();
+        public readonly HashSet<Vector2Int> water = new HashSet<Vector2Int>();
+        public readonly HashSet<Vector2Int> path = new HashSet<Vector2Int>();
+    }
 
     // 구역마다 뽑는 풍경. 연못과 숲·꽃밭을 자주 만나도록 여러 번 넣어 뒀다.
     private static readonly Theme[] ThemeBag =
@@ -103,6 +118,7 @@ public class WildTerrain : MonoBehaviour
     private readonly Queue<Vector2Int> toClear = new Queue<Vector2Int>();
     private Vector2Int center = new Vector2Int(int.MinValue, int.MinValue);
     private static WildTerrain current;
+    private BuildState building;
 
     private void Awake()
     {
@@ -140,7 +156,13 @@ public class WildTerrain : MonoBehaviour
             HideDecor();
         }
 
-        // 한 프레임에 구역 하나씩만 만들거나 지워서 끊기지 않게 한다
+        // 만들던 구역이 있으면 이어서 조금씩 꾸민다
+        if (building != null)
+        {
+            Decorate(building);
+            return;
+        }
+
         if (toClear.Count > 0)
         {
             Clear(toClear.Dequeue());
@@ -148,7 +170,7 @@ public class WildTerrain : MonoBehaviour
         }
         if (toBuild.Count > 0)
         {
-            Build(toBuild.Dequeue());
+            StartBuild(toBuild.Dequeue());
             return;
         }
 
@@ -234,51 +256,24 @@ public class WildTerrain : MonoBehaviour
         RescanPaths(chunk);
     }
 
-    private void Build(Vector2Int chunk)
+    private void StartBuild(Vector2Int chunk)
     {
-        var random = new System.Random(seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663));
-        Theme theme = ThemeBag[random.Next(ThemeBag.Length)];
-        var taken = new HashSet<Vector3Int>();
-        var water = new HashSet<Vector2Int>();
-        var path = new HashSet<Vector2Int>();
-
-        // 서로 spacing칸 안에는 겹쳐 두지 않고, 물가에는 두지 않는다
-        void Put(Tilemap tilemap, Vector3Int cell, TileBase tile, int spacing)
+        var state = new BuildState
         {
-            for (int x = -spacing; x <= spacing; x++)
-            {
-                for (int y = -spacing; y <= spacing; y++)
-                {
-                    if (taken.Contains(new Vector3Int(cell.x + x, cell.y + y, 0)))
-                        return;
-                }
-            }
-            if (NearWater(water, cell))
-                return;
-            // 원래 깔려 있던 꽃·새싹 위에 또 놓으면 겹쳐 보인다
-            if (tilemap == flowerMap && GroundDecorAt(cell) != null)
-                return;
+            chunk = chunk,
+            random = new System.Random(seed ^ (chunk.x * 73856093) ^ (chunk.y * 19349663)),
+        };
+        state.theme = ThemeBag[state.random.Next(ThemeBag.Length)];
 
-            tilemap.SetTile(cell, tile);
-            taken.Add(cell);
-            // 나무·해바라기는 밑둥 자리에 작은 풀을 깔아, 밑둥 쪽만 풀이 앞에 보이게 한다
-            if (tilemap == objectMap && baseGrass.Length > 0 && random.NextDouble() < 0.5)
-            {
-                BaseGrass.PlaceAtBase(baseGrassMap, objectMap, cell, baseGrass[random.Next(baseGrass.Length)], baseOffset);
-            }
-        }
-
-        TileBase Pick(TileBase[] tiles) => tiles[random.Next(tiles.Length)];
-
-        if (theme == Theme.Pond)
+        if (state.theme == Theme.Pond)
         {
-            DigPond(chunk, random, water);
+            DigPond(chunk, state.random, state.water);
         }
-        DrawPath(chunk, water, path);
+        DrawPath(chunk, state.water, state.path);
 
         // 물과 길 위에 놓여 있던 꽃·새싹은 치워 둔다 (물에 뜨거나 길을 덮어 보이지 않게)
-        var hidden = new List<Vector2Int>(water);
-        hidden.AddRange(path);
+        var hidden = new List<Vector2Int>(state.water);
+        hidden.AddRange(state.path);
         if (hidden.Count > 0)
         {
             hiddenByChunk[chunk] = hidden;
@@ -286,72 +281,121 @@ public class WildTerrain : MonoBehaviour
             HideDecor();
         }
 
-        foreach (Vector3Int cell in CellsOf(chunk))
+        state.cells = new List<Vector3Int>(CellsOf(chunk));
+        building = state;
+    }
+
+    // 한 프레임에 cellsPerFrame칸씩만 꾸며서 화면이 끊기지 않게 한다
+    private void Decorate(BuildState state)
+    {
+        int limit = Mathf.Min(state.index + cellsPerFrame, state.cells.Count);
+        for (; state.index < limit; state.index++)
         {
+            Vector3Int cell = state.cells[state.index];
             var spot = new Vector2Int(cell.x, cell.y);
-            if (homeArea.Contains(spot) || water.Contains(spot) || path.Contains(spot))
+            if (homeArea.Contains(spot) || state.water.Contains(spot) || state.path.Contains(spot))
                 continue;
 
-            double roll = random.NextDouble();
-            switch (theme)
-            {
-                case Theme.Woods:
-                    // 나무가 많은 숲: 가로지르는 빈 줄을 남겨 지나갈 수 있게 한다
-                    if ((cell.x + cell.y) % 7 == 0 || (cell.x - cell.y) % 9 == 0)
+                double roll = state.random.NextDouble();
+                switch (state.theme)
+                {
+                    case Theme.Woods:
+                        // 나무가 많은 숲: 가로지르는 빈 줄을 남겨 지나갈 수 있게 한다
+                        if ((cell.x + cell.y) % 7 == 0 || (cell.x - cell.y) % 9 == 0)
+                            break;
+                        if (roll < 0.18)
+                            Put(state, objectMap, cell, trees[0], 1);
+                        else if (roll < 0.24)
+                            Put(state, objectMap, cell, Pick(state, trees), 2);
+                        else if (roll < 0.28)
+                            Put(state, flowerMap, cell, Pick(state, mushrooms), 1);
+                        else if (roll < 0.3)
+                            Put(state, objectMap, cell, Pick(state, stumps), 1);
                         break;
-                    if (roll < 0.18)
-                        Put(objectMap, cell, trees[0], 1);
-                    else if (roll < 0.24)
-                        Put(objectMap, cell, Pick(trees), 2);
-                    else if (roll < 0.28)
-                        Put(flowerMap, cell, Pick(mushrooms), 1);
-                    else if (roll < 0.3)
-                        Put(objectMap, cell, Pick(stumps), 1);
-                    break;
 
-                case Theme.Rocky:
-                    if (roll < 0.08)
-                        Put(objectMap, cell, Pick(rocks), 1);
-                    else if (roll < 0.11)
-                        Put(objectMap, cell, Pick(stumps), 1);
-                    else if (roll < 0.14)
-                        Put(objectMap, cell, Pick(bushes), 2);
-                    break;
+                    case Theme.Rocky:
+                        if (roll < 0.08)
+                            Put(state, objectMap, cell, Pick(state, rocks), 1);
+                        else if (roll < 0.11)
+                            Put(state, objectMap, cell, Pick(state, stumps), 1);
+                        else if (roll < 0.14)
+                            Put(state, objectMap, cell, Pick(state, bushes), 2);
+                        break;
 
-                case Theme.Meadow:
-                    if (roll < 0.2)
-                        Put(flowerMap, cell, Pick(flowers), 1);
-                    else if (roll < 0.215)
-                        Put(objectMap, cell, sunflower, 2);
-                    break;
+                    case Theme.Meadow:
+                        if (roll < 0.2)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
+                        else if (roll < 0.215)
+                            Put(state, objectMap, cell, sunflower, 2);
+                        break;
 
-                case Theme.Orchard:
-                    // 과일나무를 네 칸 간격으로 줄 맞춰 심는다
-                    if (cell.x % 4 == 0 && cell.y % 4 == 0)
-                        Put(objectMap, cell, trees[trees.Length - 1], 3);
-                    else if (roll < 0.1)
-                        Put(flowerMap, cell, Pick(flowers), 1);
-                    break;
+                    case Theme.Orchard:
+                        // 과일나무를 네 칸 간격으로 줄 맞춰 심는다
+                        if (cell.x % 4 == 0 && cell.y % 4 == 0)
+                            Put(state, objectMap, cell, trees[trees.Length - 1], 3);
+                        else if (roll < 0.1)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
+                        break;
 
-                case Theme.Pond:
-                    if (roll < 0.12)
-                        Put(flowerMap, cell, Pick(flowers), 1);
-                    else if (roll < 0.15)
-                        Put(objectMap, cell, Pick(bushes), 2);
-                    else if (roll < 0.17)
-                        Put(objectMap, cell, trees[0], 2);
-                    break;
+                    case Theme.Pond:
+                        if (roll < 0.12)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
+                        else if (roll < 0.15)
+                            Put(state, objectMap, cell, Pick(state, bushes), 2);
+                        else if (roll < 0.17)
+                            Put(state, objectMap, cell, trees[0], 2);
+                        break;
 
-                case Theme.Clearing:
-                    if (roll < 0.09)
-                        Put(flowerMap, cell, Pick(flowers), 1);
-                    else if (roll < 0.11)
-                        Put(objectMap, cell, Pick(bushes), 2);
-                    break;
+                    case Theme.Clearing:
+                        if (roll < 0.09)
+                            Put(state, flowerMap, cell, Pick(state, flowers), 1);
+                        else if (roll < 0.11)
+                            Put(state, objectMap, cell, Pick(state, bushes), 2);
+                        break;
+                }
+        }
+
+        if (state.index < state.cells.Count)
+            return;
+
+        building = null;
+        if (state.solidChanged || state.water.Count > 0)
+        {
+            RescanPaths(state.chunk);
+        }
+    }
+
+    // 서로 spacing칸 안에는 겹쳐 두지 않고, 물가에는 두지 않는다
+    private void Put(BuildState state, Tilemap tilemap, Vector3Int cell, TileBase tile, int spacing)
+    {
+        for (int x = -spacing; x <= spacing; x++)
+        {
+            for (int y = -spacing; y <= spacing; y++)
+            {
+                if (state.taken.Contains(new Vector3Int(cell.x + x, cell.y + y, 0)))
+                    return;
             }
         }
-        RescanPaths(chunk);
+        if (NearWater(state.water, cell))
+            return;
+        // 원래 깔려 있던 꽃·새싹 위에 또 놓으면 겹쳐 보인다
+        if (tilemap == flowerMap && GroundDecorAt(cell) != null)
+            return;
+
+        tilemap.SetTile(cell, tile);
+        state.taken.Add(cell);
+        if (tilemap == objectMap)
+        {
+            state.solidChanged = true;
+            // 나무·해바라기는 밑둥 자리에 작은 풀을 깔아, 밑둥 쪽만 풀이 앞에 보이게 한다
+            if (baseGrass.Length > 0 && state.random.NextDouble() < 0.5)
+            {
+                BaseGrass.PlaceAtBase(baseGrassMap, objectMap, cell, baseGrass[state.random.Next(baseGrass.Length)], baseOffset);
+            }
+        }
     }
+
+    private static TileBase Pick(BuildState state, TileBase[] tiles) => tiles[state.random.Next(tiles.Length)];
 
     // 구불구불한 흙길을 깐다. 길 자리는 세계 좌표만으로 정해지므로 구역이 바뀌어도 끊기지 않고 이어진다.
     private void DrawPath(Vector2Int chunk, HashSet<Vector2Int> water, HashSet<Vector2Int> path)
