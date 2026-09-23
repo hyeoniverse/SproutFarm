@@ -13,7 +13,7 @@ public class BaseGrass : MonoBehaviour
     public TileBase fenceTile;                // 울타리 타일 (같은 타일맵의 벽 조각 등은 빼려고)
     public TilemapRenderer[] tallRenderers;   // 나무·해바라기 타일맵
     public TileBase[] tiles;                  // 밑둥에 깔 작은 새싹·꽃
-    public int sortingOrder = 8;              // 나무·해바라기(7)보다 위
+    public int sortingOrder = 3;              // 캐릭터·꽃과 같은 층 (y 위치로 앞뒤가 정해짐)
     public int fenceGrassOrder = 3;           // 울타리 밑둥 풀은 캐릭터와 같은 층 (y 위치로 앞뒤가 정해짐)
     public float baseOffset = 0.2f;           // 밑둥 그림 맨 아래에서 이만큼 위에 풀을 놓는다
     [Range(0f, 1f)] public float chance = 0.7f;
@@ -26,7 +26,7 @@ public class BaseGrass : MonoBehaviour
     private void Start()
     {
         random = new System.Random(seed);
-        Tilemap baseGrass = CreateTilemap("Base Grass", sortingOrder, TilemapRenderer.Mode.Chunk);
+        Tilemap baseGrass = CreateTilemap("Base Grass", sortingOrder, TilemapRenderer.Mode.Individual);
         Tilemap fenceGrass = CreateTilemap("Fence Grass", fenceGrassOrder, TilemapRenderer.Mode.Individual);
         CollectObjectAreas();
 
@@ -163,9 +163,8 @@ public class BaseGrass : MonoBehaviour
         if (baseGrass.HasTile(target))
             return;
 
+        // 칸 안에서 옮기면 앞뒤 순서가 어긋나므로, 밑둥이 있는 칸에 그대로 놓는다
         baseGrass.SetTile(target, tile);
-        // 풀 그림이 밑둥 높이에 오도록 칸 안에서 조금 옮긴다
-        baseGrass.SetTransformMatrix(target, Matrix4x4.Translate(bottom - baseGrass.GetCellCenterWorld(target)));
     }
 
     // 그림에서 실제로 칠해진 부분의 범위 (스프라이트 기준점 기준, 유닛 단위)
