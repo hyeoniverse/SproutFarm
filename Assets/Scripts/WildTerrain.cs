@@ -382,15 +382,8 @@ public class WildTerrain : MonoBehaviour
         }
         if (NearWater(state.water, cell))
             return;
-        // 원래 깔려 있던 꽃·새싹과 겹치거나, 위아래로 붙으면 캐릭터 몸에 걸쳐 보인다
-        if (tilemap == flowerMap
-            && (GroundDecorAt(cell) != null
-                || GroundDecorAt(cell + Vector3Int.up) != null
-                || GroundDecorAt(cell + Vector3Int.down) != null
-                || flowerMap.GetTile(cell + Vector3Int.up) != null
-                || flowerMap.GetTile(cell + Vector3Int.down) != null
-                || baseGrassMap.GetTile(cell + Vector3Int.up) != null
-                || baseGrassMap.GetTile(cell + Vector3Int.down) != null))
+        // 원래 깔려 있던 꽃·새싹 위에 또 놓으면 겹쳐 보인다
+        if (tilemap == flowerMap && GroundDecorAt(cell) != null)
             return;
 
         tilemap.SetTile(cell, tile);

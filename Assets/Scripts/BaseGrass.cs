@@ -89,15 +89,10 @@ public class BaseGrass : MonoBehaviour
         if (CoveredByObject(BasePosition(source, cell, baseOffset), AreaOf(source, cell)))
             return;
 
-        Vector3 spot = source.GetCellCenterWorld(cell);
-        if (PlantAt(spot) || PlantAt(spot + Vector3.up) || PlantAt(spot + Vector3.down))
-            return;
-
         fenceGrass.SetTile(cell, tiles[random.Next(tiles.Length)]);
     }
 
-    // 위아래로 붙어 있는 꽃·새싹은 아래 칸에 선 캐릭터 몸에 위 칸 그림이 걸친다.
-    // 층이 달라도 마찬가지라 모든 꽃 타일맵을 한꺼번에 보고 위쪽 것을 치운다.
+    // 쓰지 않기로 한 장식을 치운다
     private void TidyGrass()
     {
         foreach (TilemapRenderer grassRenderer in grassRenderers)
@@ -108,8 +103,7 @@ public class BaseGrass : MonoBehaviour
                 if (grass.GetTile(cell) == null)
                     continue;
 
-                Vector3 here = grass.GetCellCenterWorld(cell);
-                if (System.Array.IndexOf(bannedTiles, grass.GetTile(cell)) >= 0 || PlantAt(here + Vector3.down))
+                if (System.Array.IndexOf(bannedTiles, grass.GetTile(cell)) >= 0)
                 {
                     grass.SetTile(cell, null);
                 }
