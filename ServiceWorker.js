@@ -37,8 +37,11 @@ self.addEventListener('fetch', function (e) {
     e.respondWith((async function () {
       try {
         const response = await fetch(e.request);
-        // Leaderboard responses must stay live, so only static files are cached.
-        if (e.request.method === 'GET' && response.status === 200 && !new URL(e.request.url).pathname.startsWith('/api/')) {
+        // Leaderboard responses and the analytics endpoints must stay live,
+        // so only static files are cached.
+        const path = new URL(e.request.url).pathname;
+        const live = path.startsWith('/api/') || path.startsWith('/_vercel/');
+        if (e.request.method === 'GET' && response.status === 200 && !live) {
           const cache = await caches.open(cacheName);
           cache.put(e.request, response.clone());
         }

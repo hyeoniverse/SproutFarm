@@ -8,6 +8,16 @@
     <link rel="stylesheet" href="TemplateData/style.css?v=5" />
     <script src="TemplateData/ranking.js?v=4" defer></script>
     <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Vercel Web Analytics / Speed Insights. The queue shims collect anything
+         fired before the scripts load; both scripts are served by Vercel itself
+         and simply 404 when the page runs anywhere else. -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
   </head>
   <body>
     <div id="unity-container">

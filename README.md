@@ -90,6 +90,7 @@
 | 배포 | WebGL (Brotli 압축) → Vercel 정적 호스팅 |
 | 서버 | Vercel 서버리스 함수 (`api/scores.js`) + Redis |
 | 웹 | Service Worker (network-first 캐시), 랭킹 UI는 HTML·JS |
+| 계측 | Vercel Web Analytics · Speed Insights |
 
 # Features
 
@@ -400,6 +401,8 @@ try {
   throw error;
 }
 ```
+
+방문 수와 실제 사용자 성능(Core Web Vitals)은 Vercel Web Analytics·Speed Insights로 봅니다. 프레임워크를 쓰지 않는 정적 사이트라 `index.html`에 계측 스크립트를 직접 넣었고, 이 요청들은 랭킹 API처럼 Service Worker 캐시에서 빼 두었습니다.
 
 ## Demo
 
