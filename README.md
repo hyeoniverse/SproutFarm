@@ -548,7 +548,7 @@ Redis를 연결하지 않아도 게임은 동작합니다. 결과 화면에 "랭
 
 랭킹이 필요 없다면 `WebGL` 브랜치 전체를 아무 정적 호스팅(GitHub Pages, Netlify 등)에 올려도 됩니다. 압축 헤더가 없어도 동작하지만, `.unityweb` 파일에 `Content-Encoding: br` 헤더를 붙여 주면 로딩이 더 빠릅니다.
 
-GitHub Pages는 `.github/workflows/static.yml`이 `WebGL` 브랜치에 push할 때마다 저장소 전체를 올립니다. fork한 저장소에서 쓰려면 **Settings → Pages → Source**를 GitHub Actions로 설정합니다. **Settings → Environments → github-pages**에서 배포할 수 있는 브랜치를 제한해 두었다면 `WebGL`을 허용 목록에 넣어야 합니다. GitHub Pages에서는 `api/`가 동작하지 않아 랭킹은 비활성 상태가 됩니다.
+GitHub Pages에 올리려면 fork한 저장소의 **Settings → Pages → Source**에서 **Deploy from a branch**를 고르고, 브랜치는 `WebGL`, 폴더는 `/ (root)`로 지정합니다. 그러면 `WebGL` 브랜치에 push할 때마다 `https://<사용자명>.github.io/SproutFarm/`에 자동으로 올라갑니다. GitHub Pages에서는 `api/`가 동작하지 않아 랭킹은 비활성 상태가 됩니다.
 
 ## 에셋과 라이선스
 
