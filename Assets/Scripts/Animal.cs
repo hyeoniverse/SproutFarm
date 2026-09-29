@@ -305,8 +305,9 @@ public class Animal : MonoBehaviour
 
     public void StartFollowingPlayer()
     {
-        // 울타리를 뛰쳐나가는 중에는 스쳐 지나가도 잡히지 않는다
-        if (!isFollowing && !isEscaping)
+        // 울타리를 뛰쳐나가는 중에는 스쳐 지나가도 잡히지 않는다.
+        // 울타리에 넣은 동물도 (들어가는 중이든 울타리 너머 가장자리에 있든) 플레이어가 닿았다고 다시 따라오지 않는다.
+        if (!isFollowing && !isEscaping && !isCaptured)
         {
             isFollowing = true;
             aiPath.canMove = true;
@@ -402,11 +403,19 @@ public class Animal : MonoBehaviour
         }
     }
 
-    // 길찾기 없이 target까지 곧장 달린다 (물리를 끈 채로 쓴다)
+    // 길찾기 없이 target까지 곧장 달린다 (물리를 끈 채로 쓴다).
+    // 무엇에 막혀 제때 닿지 못하면 target으로 옮겨 연출이 멈춘 채 끝나지 않는 일이 없게 한다.
     private IEnumerator RunTo(Vector2 target, float speed)
     {
+        float giveUpTime = Time.time + Vector2.Distance(transform.position, target) / speed + 1f;
         while (Vector2.Distance(transform.position, target) > 0.01f)
         {
+            if (Time.time > giveUpTime)
+            {
+                transform.position = new Vector3(target.x, target.y, transform.position.z);
+                break;
+            }
+
             Vector2 next = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
             manualVelocity = (next - (Vector2)transform.position) / Mathf.Max(Time.deltaTime, 0.0001f);
             transform.position = new Vector3(next.x, next.y, transform.position.z);
