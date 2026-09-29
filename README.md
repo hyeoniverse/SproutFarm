@@ -11,10 +11,6 @@
 
 ## 게임 화면
 
-https://github.com/user-attachments/assets/bb0e4d7a-1ea6-4fa9-a6ff-ec5be046d588
-
-*도망친 동물 20마리를 모두 잡아 울타리에 넣기까지. 동물을 쫓는 부분은 2.5배속입니다.*
-
 | 도입 | 농장 |
 |------|------|
 | ![도입](docs/screenshot-intro.png) | ![농장](docs/screenshot-farm.png) |
@@ -414,17 +410,17 @@ try {
 
 **※ PC 환경에서만 작동합니다.**
 
-[![sproutfarm](https://github.com/user-attachments/assets/60f9de6f-f882-451a-8c2c-1ab0cd4dbcfe)](https://youtu.be/XFgvLMcFpRo?si=RFJwEilEIvX2IQv9)
+https://github.com/user-attachments/assets/bb0e4d7a-1ea6-4fa9-a6ff-ec5be046d588
 
 <details>
     <summary>영상 설명</summary>
     <div>
-        <p>시연 영상입니다. (업데이트 전 버전이라 연못·흙길·랭킹은 나오지 않습니다.)<br>
-        빠른 시간 안에 모든 기능을 보여주기 위해 플레이 타임이 짧아지도록 설정을 바꾼 상태입니다.<br>
+        <p>도망친 동물 20마리를 모두 잡아 클리어하는 한 판입니다. 녹화용 자동 조종으로 플레이했고, 짧은 영상에 모든 기능이 보이도록 몇 가지를 바꿨습니다. (소리는 없습니다.)<br>
         <ol>
-            <li>잡아야 하는 동물 수를 줄였습니다.</li>
-            <li>현재는 1시간에 약 72초로 한 판이 약 18분입니다.<br>
-            → 영상에서는 1시간에 5초로 변경해 플레이 타임을 대폭 줄였습니다.</li>
+            <li>동물을 쫓는 부분은 2.5배속입니다.</li>
+            <li>게임에서는 1시간이 약 72초로 한 판이 약 18분입니다.<br>
+            → 영상에서는 울타리에 동물을 넣을 때마다 시계를 앞으로 돌려 한낮부터 노을, 밤까지 보이게 했습니다.</li>
+            <li>캐릭터는 달리기 속도로 움직이고, 체력이 55% 아래로 떨어지지 않게 했습니다.</li>
         </ol>
         [UI]
         <ol>
