@@ -6,4 +6,11 @@ mergeInto(LibraryManager.library, {
       window.sproutFarmShowResult(JSON.parse(json));
     }
   },
+
+  // MobileInput.Enabled (Assets/Scripts/MobileInput.cs): 1 when the main pointer is a finger
+  // (phones, tablets), so the game shows its on-screen joystick and buttons. index.html uses
+  // the same media query for its touch-only styles.
+  SproutFarm_IsTouchDevice: function () {
+    return window.matchMedia && window.matchMedia("(pointer: coarse)").matches ? 1 : 0;
+  },
 });

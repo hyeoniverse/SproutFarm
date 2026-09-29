@@ -20,7 +20,8 @@ public class DialogueManager : MonoBehaviour
     {
         // ID가 0인 대화 데이터를 추가합니다.
         dialogueData.Add(0, new string[] { // 대사와 애니메이션 트리거
-            "안녕~ 새싹 농장에 온 것을 환영해 ∩'ㅅ'∩\n다음 대화로 넘어가려면 Space 바를 눌러줘!♥:Loving",
+            MobileInput.Text("안녕~ 새싹 농장에 온 것을 환영해 ∩'ㅅ'∩\n다음 대화로 넘어가려면 Space 바를 눌러줘!♥:Loving",
+                "안녕~ 새싹 농장에 온 것을 환영해 ∩'ㅅ'∩\n다음 대화로 넘어가려면 확인 버튼을 눌러줘!♥:Loving"),
             "새싹 농장에서 너만의 작은 농장을 가꿀 시간이야! 그런데 농장에는 몇 가지 규칙이 있어. 같이 살펴볼까?:Hooray1",
             "이 농장에서는 시간이 빠르게 흐르고 있어! 이 농장에서의 1시간은 현실 세계의 시간으로 계산하면......:MovingEars",
             "......$^%!%^&#@%&#&*(:MovingEars",
@@ -31,13 +32,15 @@ public class DialogueManager : MonoBehaviour
             "앗! 우리가 한 눈을 판 사이에 소와 닭들이 우리 밖으로 도망쳤어. ε=ε=(⊃≧□≦)⊃:Angry",
             "어서 하루가 다 가기 전에 도망친 소와 닭들을 잡아서 울타리에 집어 넣어야 해!!:Angry",
             "내가 작은 팁을 줄게~! 오른쪽 위를 보면 우리와 가장 가까운 동물이 있는 방향을 알 수 있어. 체력이 부족할 땐 집을 가리켜 줄게!:Sunglasses",
-            "방향키로 움직일 수 있고 Shift 키로 달릴 수 있어－＝≡ヘ(*・ω・)ノ:Sunglasses",
+            MobileInput.Text("방향키로 움직일 수 있고 Shift 키로 달릴 수 있어－＝≡ヘ(*・ω・)ノ:Sunglasses",
+                "왼쪽 조이스틱으로 움직이고 달리기 버튼을 누르고 있으면 달릴 수 있어－＝≡ヘ(*・ω・)ノ:Sunglasses"),
             "그럼, 이제 시작해볼까? 화이팅! ⌒(o＾▽＾o)ノ:Hooray2"
         });
 
         // ID가 1인 대화 데이터를 추가합니다.
         dialogueData.Add(1, new string[] {
-            "Space 바를 누르면 데려온 동물을 울타리 안에 넣을 수 있어!:Blinking"
+            MobileInput.Text("Space 바를 누르면 데려온 동물을 울타리 안에 넣을 수 있어!:Blinking",
+                "확인 버튼을 누르면 데려온 동물을 울타리 안에 넣을 수 있어!:Blinking")
         });
 
         dialogueData.Add(2, new string[] {

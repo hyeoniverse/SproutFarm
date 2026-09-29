@@ -46,6 +46,12 @@ public class GameManager : MonoBehaviour
         GameResult.Reset();
         WebBridge.CaptureKeyboard();
         greetingAudioSource = gameObject.AddComponent<AudioSource>();
+
+        // 휴대폰·태블릿에서는 화면에 조이스틱과 버튼을 띄운다
+        if (MobileInput.Enabled)
+        {
+            gameObject.AddComponent<MobileControls>();
+        }
     }
 
     private void Start()
@@ -55,7 +61,7 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (dialoguePanel.activeSelf && Input.GetKeyDown(KeyCode.Space))
+        if (dialoguePanel.activeSelf && MobileInput.InteractDown)
         {
             ShowNextDialogue();
         }

@@ -78,8 +78,9 @@ public class House : MonoBehaviour
             }
             else
             {
-                InteractionHint.Show("Space 바를 누르면 침대에서 푹 쉴 수 있어!", 1);
-                if (Input.GetKeyDown(KeyCode.Space))
+                InteractionHint.Show(MobileInput.Text("Space 바를 누르면 침대에서 푹 쉴 수 있어!",
+                    "확인 버튼을 누르면 침대에서 푹 쉴 수 있어!"), 1);
+                if (MobileInput.InteractDown)
                 {
                     StartCoroutine(Sleep());
                 }

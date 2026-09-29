@@ -15,6 +15,7 @@ public class Player : MonoBehaviour
     public float boostedSpeed;
     private float currentSpeed;
     public Vector2 inputVector;
+    private Vector2 keyboardVector; // 키보드(방향키·WASD)로 들어온 방향. 터치 조이스틱을 쓰는 중이면 그쪽이 먼저
     private Vector3 directionVector;
 
     // 스프라이트 및 애니메이션 관련 변수들
@@ -105,6 +106,7 @@ public class Player : MonoBehaviour
     // 매 프레임 호출되는 업데이트 메서드
     void Update()
     {
+        inputVector = MobileInput.Move != Vector2.zero ? MobileInput.Move : keyboardVector;
         UpdateDirectionVector(); // 이동 방향 벡터 업데이트
         HandleDialogueInput(); // 대화 입력 처리
         HandleCaptureInput(); // 울타리에 동물 넣기 처리
@@ -136,7 +138,7 @@ public class Player : MonoBehaviour
     // 이동 입력 처리
     private void OnMove(InputValue value)
     {
-        inputVector = value.Get<Vector2>();
+        keyboardVector = value.Get<Vector2>();
     }
 
     // 충돌 처리
@@ -173,7 +175,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        if (Input.GetButtonDown("Jump") && scanObject != null)
+        if ((Input.GetButtonDown("Jump") || MobileInput.InteractButton) && scanObject != null)
         {
             gameManager.ScanAction(scanObject);
         }
@@ -188,7 +190,7 @@ public class Player : MonoBehaviour
             return;
         }
 
-        bool isRunning = Input.GetKey(KeyCode.LeftShift);
+        bool isRunning = MobileInput.RunHeld;
         bool isMoving = inputVector.magnitude > 0;
         float currentBaseSpeed = isRunning ? boostedSpeed : baseSpeed;
 
@@ -232,7 +234,7 @@ public class Player : MonoBehaviour
         rigidBody.MovePosition(rigidBody.position + nextVector);
     }
 
-    // 울타리 근처에서 Space 바를 누르면 따라오는 동물을 울타리에 넣음
+    // 울타리 근처에서 Space 바(확인 버튼)를 누르면 따라오는 동물을 울타리에 넣음
     // (키 입력은 FixedUpdate가 돌지 않는 프레임에 놓칠 수 있어서 Update에서 처리)
     private void HandleCaptureInput()
     {
@@ -242,8 +244,9 @@ public class Player : MonoBehaviour
         if (!IsNearFence() || gameManager.IsInitialDialogue() || dialogueJustOpenOrClosed)
             return;
 
-        InteractionHint.Show("Space 바를 누르면 데려온 동물을 울타리에 넣을 수 있어!", 1);
-        if (!Input.GetKeyDown(KeyCode.Space))
+        InteractionHint.Show(MobileInput.Text("Space 바를 누르면 데려온 동물을 울타리에 넣을 수 있어!",
+            "확인 버튼을 누르면 데려온 동물을 울타리에 넣을 수 있어!"), 1);
+        if (!MobileInput.InteractDown)
             return;
 
         if (!gameManager.HasFollowingAnimals())

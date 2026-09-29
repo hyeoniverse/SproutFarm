@@ -43,10 +43,24 @@ public class ClearSceneManager : MonoBehaviour
         {
             RestartGame(); // 게임 재시작
         }
-        else if (Input.touchCount > 0) // 터치 입력 감지
+        else if (TouchBegan()) // 새로 화면을 누름
         {
             RestartGame(); // 게임 재시작
         }
+    }
+
+    // 이번 프레임에 새로 닿은 손가락이 있는지. 게임이 끝날 때 조이스틱을 누르고 있던 손가락은
+    // 이 씬에서도 계속 닿아 있으므로, 닿아 있기만 한 것으로 재시작하면 결과를 보기도 전에 다시 시작된다.
+    private bool TouchBegan()
+    {
+        for (int i = 0; i < Input.touchCount; i++)
+        {
+            if (Input.GetTouch(i).phase == TouchPhase.Began)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     // 게임을 재시작하는 메서드
