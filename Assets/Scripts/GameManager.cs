@@ -299,7 +299,8 @@ public class GameManager : MonoBehaviour
         foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
         {
             Animal animalScript = animal.GetComponent<Animal>();
-            if (animalScript != null && animalScript.isCaptured == false)
+            // 울타리를 넘어 들어가는 연출이 끝날 때까지는 기다린다
+            if (animalScript != null && (animalScript.isCaptured == false || animalScript.IsEnteringPen))
             {
                 return false;
             }

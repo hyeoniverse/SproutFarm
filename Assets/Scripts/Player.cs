@@ -61,6 +61,7 @@ public class Player : MonoBehaviour
     // 울타리(동물 우리)가 차지하는 곳과, 동물을 넣을 수 있는 거리
     public Rect penArea = new Rect(0f, 0f, 12f, 7f);
     public float fenceReach = 1.2f;
+    public float captureStagger = 0.25f; // 여러 마리를 넣을 때 한 마리씩 울타리를 넘는 간격(초)
     // 대화를 Space 바로 닫은 바로 그 프레임의 입력이 울타리 판정에 쓰이지 않도록 지난 프레임 상태를 기억
     private bool dialogueOpenLastFrame;
     // 침대에서 쉬는 동안에는 움직이지 않음
@@ -255,13 +256,15 @@ public class Player : MonoBehaviour
             return;
         }
 
+        // 한 마리씩 조금씩 늦게 출발해 차례로 울타리를 넘는다
+        float delay = 0f;
         foreach (GameObject animal in GameObject.FindGameObjectsWithTag("Animal"))
         {
             Animal animalScript = animal.GetComponent<Animal>();
             if (animalScript != null && animalScript.isFollowing)
             {
-                Vector2 fencePosition = new Vector2(4, 4); // 울타리의 중심 위치
-                animalScript.CapturedIn(fencePosition);
+                animalScript.CapturedIn(delay);
+                delay += captureStagger;
             }
         }
     }

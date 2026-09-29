@@ -47,8 +47,10 @@ public class Animal : MonoBehaviour
 
     public bool isCaptured = true;
     public bool isFollowing = false;
+    public bool IsEnteringPen => isEnteringPen;
 
     private bool isEscaping;       // 울타리를 뛰쳐나가 흩어지는 중 (이동 중에는 잡히지 않는다)
+    private bool isEnteringPen;    // 울타리를 뛰어넘어 들어가는 중 (다 들어가야 게임이 끝난다)
     private Vector2 manualVelocity; // 길찾기 없이 직접 옮기는 동안의 속도 (애니메이션 방향용)
 
     private Transform playerTransform;
@@ -361,15 +363,9 @@ public class Animal : MonoBehaviour
         yield return Hop(transform.position, transform.position, 0.35f, 0.25f);
         yield return new WaitForSeconds(0.15f);
 
-        FindFenceExit(destination, out Vector2 takeoff, out Vector2 landing);
+        FindFenceCrossing(destination, true, out Vector2 takeoff, out Vector2 landing);
         float runSpeed = baseSpeed * escapeSpeedMultiplier;
-        while (Vector2.Distance(transform.position, takeoff) > 0.01f)
-        {
-            Vector2 next = Vector2.MoveTowards(transform.position, takeoff, runSpeed * Time.deltaTime);
-            manualVelocity = (next - (Vector2)transform.position) / Mathf.Max(Time.deltaTime, 0.0001f);
-            transform.position = new Vector3(next.x, next.y, transform.position.z);
-            yield return null;
-        }
+        yield return RunTo(takeoff, runSpeed);
 
         manualVelocity = (landing - takeoff).normalized * runSpeed;
         yield return Hop(takeoff, landing, escapeJumpHeight, escapeJumpDuration);
@@ -406,6 +402,19 @@ public class Animal : MonoBehaviour
         }
     }
 
+    // 길찾기 없이 target까지 곧장 달린다 (물리를 끈 채로 쓴다)
+    private IEnumerator RunTo(Vector2 target, float speed)
+    {
+        while (Vector2.Distance(transform.position, target) > 0.01f)
+        {
+            Vector2 next = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
+            manualVelocity = (next - (Vector2)transform.position) / Mathf.Max(Time.deltaTime, 0.0001f);
+            transform.position = new Vector3(next.x, next.y, transform.position.z);
+            yield return null;
+        }
+        manualVelocity = Vector2.zero;
+    }
+
     // from에서 to까지 포물선을 그리며 뛴다 (from과 to가 같으면 제자리 뛰기)
     private IEnumerator Hop(Vector2 from, Vector2 to, float height, float duration)
     {
@@ -420,9 +429,9 @@ public class Animal : MonoBehaviour
         transform.position = new Vector3(to.x, to.y, transform.position.z);
     }
 
-    // destination에 가까운 울타리 칸을 골라 안쪽 도약 지점과 바깥쪽 착지 지점을 구한다.
-    // 나무·벽에 막힌 곳, 지붕 아래, 플레이어 바로 옆으로는 뛰어내리지 않는다.
-    private void FindFenceExit(Vector2 destination, out Vector2 takeoff, out Vector2 landing)
+    // destination에 가까운 울타리 칸을 골라 안쪽 지점(takeoff)과 바깥쪽 지점(landing)을 구한다. 들어갈 때는 반대로 쓴다.
+    // 나무·벽에 막힌 곳, 지붕 아래로는 넘지 않고, avoidPlayer면 플레이어 바로 옆으로도 뛰어내리지 않는다.
+    private void FindFenceCrossing(Vector2 destination, bool avoidPlayer, out Vector2 takeoff, out Vector2 landing)
     {
         Rect pen = GameManager.instance.player.penArea;
         Vector2 playerPosition = playerTransform.position;
@@ -450,7 +459,7 @@ public class Animal : MonoBehaviour
                     default: inside = new Vector2(pen.xMax - 1.5f, along); outside = new Vector2(pen.xMax + 0.8f, along); break;
                 }
 
-                if (Vector2.Distance(outside, playerPosition) < 4f
+                if ((avoidPlayer && Vector2.Distance(outside, playerPosition) < 4f)
                     || Physics2D.OverlapCircle(outside, 0.4f, blockers, overlapResults) > 0
                     || (house != null && house.IsUnderRoof(outside)))
                     continue;
@@ -490,7 +499,7 @@ public class Animal : MonoBehaviour
         while (!isFollowing)
         {
             // 울타리를 뛰쳐나가는 동안에는 도망갈 곳을 덮어쓰지 않는다
-            if (!isEscaping)
+            if (!isEscaping && !isEnteringPen)
             {
                 Vector2 randomDirection = Random.insideUnitCircle.normalized;
                 Vector2 randomPosition = (Vector2)transform.position + randomDirection * randomMoveRadius;
@@ -504,13 +513,45 @@ public class Animal : MonoBehaviour
         }
     }
 
-    public void CapturedIn(Vector2 position)
+    // 따라오던 동물을 울타리에 넣는다: 가까운 울타리 바깥까지 걸어가 울타리를 뛰어넘고, 안쪽 빈자리로 걸어 들어간다.
+    // 여러 마리를 한꺼번에 넣을 때 겹치지 않게 delay만큼 기다렸다 출발한다.
+    // 잡은 수에 곧바로 들어가도록 isCaptured는 바로 켜고, 다 들어갈 때까지는 isEnteringPen으로 게임이 끝나지 않게 한다.
+    public void CapturedIn(float delay)
     {
+        isEnteringPen = true; // 먼저 켜야 StopFollowingPlayer가 시작하는 돌아다니기가 목적지를 덮어쓰지 않는다
         StopFollowingPlayer();
         isCaptured = true;
-        transform.position = position; // 위치를 즉시 변경
         aiPath.canMove = false;
         destinationSetter.target = null;
+        StartCoroutine(EnterPenRoutine(delay));
+    }
+
+    private IEnumerator EnterPenRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        FindFenceCrossing(transform.position, false, out Vector2 inside, out Vector2 outside);
+        float walkSpeed = GameManager.instance.player.baseSpeed;
+
+        // 울타리 바깥까지는 길찾기로 걸어간다 (나무·집을 돌아가도록). 오래 걸리면 남은 길은 곧장 간다.
+        aiPath.maxSpeed = walkSpeed;
+        aiPath.endReachedDistance = 0.2f;
+        aiPath.destination = outside;
+        aiPath.canMove = true;
+        aiPath.SearchPath();
+        float giveUpTime = Time.time + 3f;
+        while (Time.time < giveUpTime && Vector2.Distance(transform.position, outside) > 0.3f)
+        {
+            yield return null;
+        }
+        aiPath.canMove = false;
+
+        // 울타리를 넘는 동안에는 울타리·다른 동물에 걸리지 않게 물리를 끈다
+        rigid.simulated = false;
+        yield return RunTo(outside, walkSpeed);
+        manualVelocity = (inside - outside).normalized * walkSpeed;
+        yield return Hop(outside, inside, escapeJumpHeight, escapeJumpDuration);
+        manualVelocity = Vector2.zero;
 
         // 울타리 안으로 들어갈 때 효과음 재생
         if (capturedInSound != null)
@@ -521,5 +562,27 @@ public class Animal : MonoBehaviour
         {
             Debug.LogWarning("capturedInSound is not set.");
         }
+
+        yield return RunTo(FreeSpotInPen(inside), baseSpeed);
+
+        rigid.simulated = true;
+        aiPath.maxSpeed = baseSpeed;
+        aiPath.Teleport(transform.position);
+        isEnteringPen = false;
+    }
+
+    // 울타리 안에서 막힌 것이 없는 자리를 고른다 (못 찾으면 fallback)
+    private Vector2 FreeSpotInPen(Vector2 fallback)
+    {
+        Rect pen = GameManager.instance.player.penArea;
+        ContactFilter2D blockers = solidOnly;
+        blockers.SetLayerMask(~LayerMask.GetMask("Animal", "Player"));
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            Vector2 spot = new Vector2(Random.Range(pen.xMin + 1.5f, pen.xMax - 1.5f), Random.Range(pen.yMin + 1.5f, pen.yMax - 1.5f));
+            if (Physics2D.OverlapCircle(spot, 0.4f, blockers, overlapResults) == 0)
+                return spot;
+        }
+        return fallback;
     }
 }
