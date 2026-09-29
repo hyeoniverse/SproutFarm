@@ -27,6 +27,7 @@ public class BaseGrass : MonoBehaviour
     private void Start()
     {
         random = new System.Random(seed);
+        grassRenderers = Reposition.WithCopies(grassRenderers); // 무한 맵을 채우려고 복사한 꽃·새싹 타일맵도 함께 다룬다
         Tilemap baseGrass = CreateTilemap("Base Grass", sortingOrder, TilemapRenderer.Mode.Individual);
         Tilemap fenceGrass = CreateTilemap("Fence Grass", fenceGrassOrder, TilemapRenderer.Mode.Individual);
         TidyGrass();

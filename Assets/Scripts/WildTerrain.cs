@@ -142,6 +142,7 @@ public class WildTerrain : MonoBehaviour
         baseGrassMap = CreateTilemap("Wild Base Grass", baseGrassOrder, TilemapRenderer.Mode.Individual, false);
         baseGrassMap.transform.localPosition = new Vector3(0f, 0.5f, 0f);
 
+        groundDecor = Reposition.WithCopies(groundDecor); // 무한 맵을 채우려고 복사한 꽃·새싹 타일맵도 함께 다룬다
         groundDecorMaps = new Tilemap[groundDecor.Length];
         decorPositions = new Vector3[groundDecor.Length];
         for (int i = 0; i < groundDecor.Length; i++)
