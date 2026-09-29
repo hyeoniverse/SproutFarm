@@ -11,6 +11,10 @@
 
 ## 게임 화면
 
+https://github.com/user-attachments/assets/d94edbf4-a60e-4edf-9e98-cf4062f6be73
+
+*2024년 첫 버전의 시연 영상입니다. 지금 버전과는 지형과 UI가 다르고, 아래 스크린샷이 현재 모습입니다.*
+
 | 도입 | 농장 |
 |------|------|
 | ![도입](docs/screenshot-intro.png) | ![농장](docs/screenshot-farm.png) |
