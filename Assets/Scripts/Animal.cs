@@ -81,6 +81,7 @@ public class Animal : MonoBehaviour
 
     void Update()
     {
+        GetOffWater();
         HandleMovement();
         HandleAnimation();
         CheckPlayerDistance(); // 플레이어와의 거리 체크
@@ -198,6 +199,56 @@ public class Animal : MonoBehaviour
         {
             aiPath.Teleport(target);
             offScreenTime = 0f;
+        }
+    }
+
+    // 멀어진 구역은 지워졌다가 돌아오면 같은 자리에 연못이 다시 생기므로, 그 사이 그 자리로 간 동물은
+    // 물속에 갇혀 잡을 수 없게 된다. 물 위에 있으면 가장 가까운 마른 땅으로 옮긴다.
+    private void GetOffWater()
+    {
+        // 울타리 안에 있거나 울타리를 뛰어넘는 중(물리가 꺼져 있을 때)에는 건드리지 않는다
+        if (isCaptured || !rigid.simulated)
+            return;
+
+        Vector2 center = collider2d.bounds.center;
+        if (!WildTerrain.IsWaterAt(center))
+            return;
+
+        ContactFilter2D blockers = solidOnly;
+        blockers.SetLayerMask(~LayerMask.GetMask("Animal", "Player"));
+        Vector2 offset = center - (Vector2)transform.position;
+        Vector2Int cell = new Vector2Int(Mathf.FloorToInt(center.x), Mathf.FloorToInt(center.y));
+
+        // 가까운 테두리부터 한 겹씩 넓혀 가며 물·나무·바위가 없고 지붕 아래가 아닌 칸을 찾는다
+        for (int ring = 1; ring <= 10; ring++)
+        {
+            float bestDistance = float.MaxValue;
+            Vector2 best = Vector2.zero;
+            for (int x = -ring; x <= ring; x++)
+            {
+                for (int y = -ring; y <= ring; y++)
+                {
+                    if (Mathf.Max(Mathf.Abs(x), Mathf.Abs(y)) != ring)
+                        continue;
+
+                    Vector2 spot = new Vector2(cell.x + x + 0.5f, cell.y + y + 0.5f);
+                    float distance = Vector2.Distance(spot, center);
+                    if (distance >= bestDistance
+                        || WildTerrain.IsWaterAt(spot)
+                        || Physics2D.OverlapCircle(spot, 0.4f, blockers, overlapResults) > 0
+                        || (house != null && house.IsUnderRoof(spot - offset)))
+                        continue;
+
+                    bestDistance = distance;
+                    best = spot;
+                }
+            }
+
+            if (bestDistance < float.MaxValue)
+            {
+                aiPath.Teleport(best - offset);
+                return;
+            }
         }
     }
 

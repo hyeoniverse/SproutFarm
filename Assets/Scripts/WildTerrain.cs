@@ -533,6 +533,15 @@ public class WildTerrain : MonoBehaviour
         return current.pathMap.GetTile(current.pathMap.WorldToCell(position)) != null;
     }
 
+    // 물 칸 위인지 (물가는 지나다닐 수 있으니 물로 치지 않는다)
+    public static bool IsWaterAt(Vector3 position)
+    {
+        if (current == null || current.pondMap == null)
+            return false;
+
+        return current.pondMap.GetTile(current.pondMap.WorldToCell(position)) == current.pondWater;
+    }
+
     // 구역 안쪽에 둥근 물웅덩이를 파고, 물에 닿는 땅에는 물가 그림을 깐다
     private void DigPond(Vector2Int chunk, System.Random random, HashSet<Vector2Int> water)
     {
