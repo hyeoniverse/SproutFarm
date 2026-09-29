@@ -1,7 +1,7 @@
 📅 2024.06.10 ~ 2024.06.24 · 업데이트 2026.09
 | [🎮플레이](https://sprout-farm-beta.vercel.app)
 
-**※ PC 환경에서만 작동합니다.** (방향키·Shift·Space 조작)
+PC(키보드)와 휴대폰·태블릿(화면 조이스틱·버튼) 모두에서 플레이할 수 있습니다. 휴대폰은 가로로 들고 하세요.
 
 # *SproutFarm 새싹 농장*이란?
 
@@ -37,7 +37,13 @@
 
 ### 조작 방법
 
-상하좌우 `방향키`로 움직이고 `Shift 키`로 달립니다. `Space 바`는 대화 넘기기, 울타리에 동물 넣기, 집에서 잠자기 같은 특수 행동에 씁니다. 자정이 지나기 전에 동물 20마리를 모두 잡아 울타리에 넣으면 승리합니다.
+| 동작 | PC | 휴대폰·태블릿 |
+|------|----|---------------|
+| 이동 | 방향키 (또는 WASD) | 화면 왼쪽을 누른 채 끌기 (조이스틱) |
+| 달리기 | `Shift` 누르고 있기 | `달리기` 버튼 누르고 있기 |
+| 대화 넘기기 · 울타리에 동물 넣기 · 침대에서 자기 | `Space` | `확인` 버튼 |
+
+자정이 지나기 전에 동물 20마리를 모두 잡아 울타리에 넣으면 승리합니다. 터치 화면에서는 조이스틱과 버튼이 자동으로 나타나고, 게임 안의 안내 문구도 버튼 이름으로 바뀝니다.
 
 ### 규칙
 
@@ -45,7 +51,7 @@
 - **동물** — 도망 상태에서는 주변을 배회하다 플레이어가 다가오면 도망칩니다. 잡히면 플레이어를 따라다니고, 울타리에 넣으면 그 안을 돌아다닙니다.
 - **체력** — 걸으면 천천히, 달리면 빠르게 닳습니다. 쉬지 않고 계속 움직이면 피로가 쌓여 더 빨리 닳고 이동 속도도 느려집니다. 멈춰 있으면 회복됩니다.
 - **열매** — 들판의 열매를 먹으면 체력이 차고 잠시 빨라집니다.
-- **잠자기** — 집 침대에서 `Space`로 자면 체력이 가득 차고 게임 시계가 1시간 지나갑니다. 체력이 70% 이상이면 잠이 오지 않습니다.
+- **잠자기** — 집 침대에서 `Space`(`확인` 버튼)로 자면 체력이 가득 차고 게임 시계가 1시간 지나갑니다. 체력이 70% 이상이면 잠이 오지 않습니다.
 - **흙길** — 길 위에서는 체력이 평소의 35%만 닳고 1.25배 빨리 움직입니다.
 
 ### 점수와 랭킹
@@ -84,7 +90,7 @@
 | 엔진 | Unity 6 (6000.6.2f1), C# |
 | 렌더링 | URP 17.6 · 2D Renderer, 투명 정렬 축을 Y로 둔 커스텀 정렬 |
 | 맵 | Tilemap (Rule Tile, 47조각 블롭 타일셋), 런타임 절차적 생성 |
-| 입력 | Input System 1.20 |
+| 입력 | Input System 1.20, 터치 기기용 화면 조이스틱·버튼 (uGUI) |
 | AI | A* Pathfinding Project 4.2.17 (Grid Graph, 부분 재스캔) |
 | UI | uGUI · TextMeshPro |
 | 배포 | WebGL (Brotli 압축) → Vercel 정적 호스팅 |
@@ -404,11 +410,25 @@ try {
 
 방문 수와 실제 사용자 성능(Core Web Vitals)은 Vercel Web Analytics·Speed Insights로 봅니다. 프레임워크를 쓰지 않는 정적 사이트라 `index.html`에 계측 스크립트를 직접 넣었고, 이 요청들은 랭킹 API처럼 Service Worker 캐시에서 빼 두었습니다.
 
+### 8. 모바일 조작
+
+페이지와 게임이 같은 기준, **주 입력이 손가락인가**(`(pointer: coarse)`)로 터치 기기를 가립니다. 사용자 에이전트 문자열로 판별하면 데스크톱 UA를 쓰는 iPad를 놓치기 때문입니다. 게임은 `SproutFarm.jslib`를 거쳐 페이지에 묻고, 터치 기기면 `GameManager`가 `MobileControls`를 붙여 조이스틱과 버튼을 코드로 그립니다. 씬은 건드리지 않습니다.
+
+```csharp
+// MobileInput.cs — 키보드와 화면 버튼 중 어느 쪽으로 눌러도 같은 입력으로 읽는다
+public static bool InteractDown => Input.GetKeyDown(KeyCode.Space) || InteractButton;
+public static bool RunHeld => Input.GetKey(KeyCode.LeftShift) || RunButton;
+```
+
+- **8방향으로 맞추기** — 조이스틱 값을 그대로 넘기지 않고 방향키를 누른 것과 같은 값(±1, 대각선은 길이 1)으로 맞춥니다. 플레이어가 바라보는 방향과 애니메이션이 방향키 기준으로 짜여 있어서, 아날로그 값(예: 0.7)을 넘기면 앞에 있는 물체를 찾지 못합니다.
+- **떠 있는 조이스틱** — 화면 왼쪽 어디를 눌러도 그 자리에 조이스틱이 나타나고, 떼면 원래 자리로 돌아갑니다. 조이스틱과 버튼은 게임과 어울리도록 도트로 그린 원을 런타임에 만듭니다.
+- **결과 화면** — 게임이 끝나는 순간 조이스틱을 누르고 있던 손가락이 결과 화면에서 곧바로 재시작을 일으키지 않도록, *새로 누른* 터치에만 재시작합니다.
+- **랭킹 이름 입력** — 휴대폰에서는 결과가 뜨자마자 키보드가 점수를 가리지 않도록 입력칸을 눌렀을 때만 키보드가 올라옵니다. 키보드가 올라오면 결과창을 `visualViewport`의 보이는 영역에 맞춰 입력칸이 가려지지 않게 하고, 키보드의 전송 키로 바로 올릴 수 있습니다.
+- **화면 방향** — 세로로 들면 가로로 돌리라는 안내가 뜹니다(이름을 입력하는 결과창은 세로에서도 쓸 수 있습니다). Android Chrome에서는 START를 누를 때 전체 화면으로 바꾸고 가로로 고정합니다.
+
 ## Demo
 
 [🎮플레이](https://sprout-farm-beta.vercel.app)
-
-**※ PC 환경에서만 작동합니다.**
 
 https://github.com/user-attachments/assets/57daa1dc-9da9-4690-a86a-3b53bbf1f92a
 
@@ -440,3 +460,98 @@ https://github.com/user-attachments/assets/57daa1dc-9da9-4690-a86a-3b53bbf1f92a
 
 ### Team members
 - 🧑‍💻 김정현(Jeong-Hyeon Kim) `hyeoniverse.dev@gmail.com`
+
+# 직접 실행하고 배포하기
+
+이 프로젝트를 내려받아 고치거나 자기 주소로 배포하는 방법입니다.
+
+## 저장소 구성
+
+한 저장소에 브랜치가 둘 있습니다.
+
+| 브랜치 | 내용 | 쓰임 |
+|--------|------|------|
+| [`unity`](https://github.com/hyeoniverse/SproutFarm/tree/unity) | Unity 프로젝트 (씬·스크립트·에셋) | 게임을 고치고 WebGL로 빌드 |
+| [`WebGL`](https://github.com/hyeoniverse/SproutFarm/tree/WebGL) (기본) | 빌드 결과물과 웹 페이지 | 그대로 정적 호스팅에 올려 배포 |
+
+`WebGL` 브랜치의 파일은 이렇게 나뉩니다.
+
+| 경로 | 내용 |
+|------|------|
+| `Build/` | Unity가 만든 WebGL 빌드 (Brotli 압축 `.unityweb` 4개) |
+| `index.html`, `TemplateData/` | 로딩 화면, 결과·랭킹 화면(`ranking.js`), 스타일, 폰트. **Unity가 만들지 않고 이 브랜치에서 직접 관리합니다.** |
+| `api/scores.js` | 랭킹 API (Vercel 서버리스 함수) |
+| `vercel.json` | `.unityweb` 파일의 압축·형식 헤더 |
+| `ServiceWorker.js`, `manifest.webmanifest` | 오프라인 캐시, 홈 화면 추가 |
+
+두 브랜치를 폴더 둘로 나눠 받아 두면 편합니다.
+
+```bash
+git clone https://github.com/hyeoniverse/SproutFarm.git SproutFarm          # WebGL 브랜치
+cd SproutFarm
+git worktree add ../SproutFarm-Unity unity                                  # Unity 프로젝트
+```
+
+> `unity` 브랜치에는 `Library/` 폴더까지 들어 있어 내려받는 양이 큽니다.
+
+## 1. 내 컴퓨터에서 실행하기
+
+`WebGL` 브랜치 폴더에서 아무 정적 서버나 띄우면 됩니다. `file://`로 `index.html`을 바로 열면 브라우저가 빌드 파일을 읽지 못합니다.
+
+```bash
+python3 -m http.server 8000
+# 또는: npx serve .
+```
+
+`http://localhost:8000`을 엽니다. 서버가 압축 헤더를 붙여 주지 않아도 로더가 직접 압축을 풀도록(decompression fallback) 빌드했으므로 그대로 동작합니다. 이 방법으로는 `/api/scores`가 없어서 **점수는 보이지만 랭킹은 "불러오지 못했어"로 나옵니다.** 랭킹까지 확인하려면 아래 Vercel 설정을 마친 뒤 `npx vercel dev`로 실행합니다.
+
+휴대폰으로 확인하려면 컴퓨터와 같은 와이파이에서 `http://<컴퓨터 IP>:8000`으로 접속합니다. 터치 기기로 인식되어 조이스틱과 버튼이 나타납니다.
+
+## 2. 게임 고치고 다시 빌드하기
+
+1. [Unity Hub](https://unity.com/download)에서 **Unity 6000.6.2f1**을 **WebGL Build Support** 모듈과 함께 설치합니다.
+2. `SproutFarm-Unity` 폴더(`unity` 브랜치)를 Unity Hub에서 엽니다. 게임 씬은 `Assets/Scenes/GameScene.unity`, 스크립트는 `Assets/Scripts/`에 있습니다.
+3. 메뉴 **Build → WebGL (Web Deploy)** 를 누릅니다. 에디터를 끈 상태라면 명령줄로도 빌드할 수 있습니다.
+
+   ```bash
+   /Applications/Unity/Hub/Editor/6000.6.2f1/Unity.app/Contents/MacOS/Unity \
+     -batchmode -quit -projectPath "$PWD" -buildTarget WebGL \
+     -executeMethod WebGLBuilder.Build -logFile build.log
+   ```
+
+   `Builds/WebGL/SproutFarm/Build/`에 결과물이 생깁니다. 압축 설정(Brotli + decompression fallback)은 `Assets/Editor/WebGLBuilder.cs`가 맞춰 주므로 Build Settings에서 따로 바꿀 필요가 없습니다.
+4. 빌드한 파일 4개를 `WebGL` 브랜치의 `Build/`에 덮어씁니다.
+
+   ```bash
+   cp ../SproutFarm-Unity/Builds/WebGL/SproutFarm/Build/SproutFarm.* Build/
+   ```
+
+5. `TemplateData/`의 CSS·JS를 고쳤다면 `index.html`에서 해당 파일의 `?v=` 숫자를 올려 브라우저 캐시를 넘깁니다.
+
+게임과 웹 페이지는 `Assets/Plugins/WebGL/SproutFarm.jslib`로 주고받습니다. 결과를 넘기는 `window.sproutFarmShowResult`(`ranking.js`)와 터치 기기 판별이 여기에 있으니, 한쪽 이름을 바꾸면 다른 쪽도 함께 바꿔야 합니다. 점수 공식을 바꿀 때는 `GameResult.cs`, `ranking.js`, `api/scores.js` 세 곳을 같이 고칩니다.
+
+## 3. Vercel에 배포하기 (랭킹 포함)
+
+1. 저장소를 자기 GitHub 계정으로 fork합니다.
+2. [Vercel](https://vercel.com/new)에서 fork한 저장소를 Import합니다.
+   - **Framework Preset**: Other
+   - **Build Command / Output Directory**: 비워 둡니다 (저장소 루트를 그대로 올립니다).
+3. 프로젝트 **Settings → Git → Production Branch**를 `WebGL`로 맞춥니다.
+4. 랭킹을 저장할 Redis를 연결합니다.
+   - 프로젝트 **Storage** 탭에서 Redis 데이터베이스를 만들어 이 프로젝트에 연결합니다. 연결할 때 환경 변수 접두어를 `sproutfarm`으로 두면 `sproutfarm_REDIS_URL`이 생깁니다.
+   - 이미 쓰는 Redis가 있다면 **Settings → Environment Variables**에 `REDIS_URL`(`redis://…` 또는 `rediss://…`)로 넣어도 됩니다.
+5. 다시 배포합니다(Redeploy). 이제 `WebGL` 브랜치에 push할 때마다 자동으로 배포됩니다.
+
+Redis를 연결하지 않아도 게임은 동작합니다. 결과 화면에 "랭킹 서버가 아직 준비 중이야"가 뜨고 기록만 올릴 수 없습니다.
+
+## 4. 다른 정적 호스팅에 배포하기
+
+랭킹이 필요 없다면 `WebGL` 브랜치 전체를 아무 정적 호스팅(GitHub Pages, Netlify 등)에 올려도 됩니다. 압축 헤더가 없어도 동작하지만, `.unityweb` 파일에 `Content-Encoding: br` 헤더를 붙여 주면 로딩이 더 빠릅니다.
+
+GitHub Pages는 `.github/workflows/static.yml`이 `WebGL` 브랜치에 push할 때마다 저장소 전체를 올립니다. fork한 저장소에서 쓰려면 **Settings → Pages → Source**를 GitHub Actions로 설정합니다. **Settings → Environments → github-pages**에서 배포할 수 있는 브랜치를 제한해 두었다면 `WebGL`을 허용 목록에 넣어야 합니다. GitHub Pages에서는 `api/`가 동작하지 않아 랭킹은 비활성 상태가 됩니다.
+
+## 에셋과 라이선스
+
+- 그래픽: [Sprout Lands Asset Pack](https://cupnooble.itch.io/sprout-lands-asset-pack) (Cup Nooble). 쓰기 전에 에셋 페이지의 이용 조건을 확인하세요. 특히 에셋 파일만 따로 떼어 다시 배포하는 것은 제한될 수 있습니다.
+- 길찾기: [A* Pathfinding Project](https://arongranberg.com/astar/) 4.2.17
+- 한글 픽셀 폰트: [Galmuri11](https://github.com/quiple/galmuri) (SIL Open Font License)

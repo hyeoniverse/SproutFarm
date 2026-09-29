@@ -3,10 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- Fill the screen on phones and tablets (including iPads that report a desktop user agent);
+         no zooming, so double taps on the on-screen buttons don't zoom the page -->
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>Sprout Farm</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico" />
-    <link rel="stylesheet" href="TemplateData/style.css?v=5" />
-    <script src="TemplateData/ranking.js?v=4" defer></script>
+    <link rel="stylesheet" href="TemplateData/style.css?v=6" />
+    <script src="TemplateData/ranking.js?v=5" defer></script>
     <link rel="manifest" href="manifest.webmanifest" />
 
     <!-- Vercel Web Analytics / Speed Insights. The queue shims collect anything
@@ -37,6 +43,11 @@
         <p id="start-hint">누르면 게임을 불러와 · 소리도 같이 나와!</p>
       </div>
       <div id="unity-warning"></div>
+      <!-- Shown by style.css on touch screens held upright: the game is drawn for landscape -->
+      <div id="rotate-hint" role="alert">
+        <div id="rotate-phone" aria-hidden="true"></div>
+        <p>휴대폰을 가로로 돌려 줘!</p>
+      </div>
     </div>
     <script>
       window.addEventListener("load", function () {
@@ -101,13 +112,23 @@
       // the canvas DOM size and WebGL render target sizes yourself.
       // config.matchWebGLToCanvasSize = false;
 
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-        var meta = document.createElement("meta");
-        meta.name = "viewport";
-        meta.content =
-          "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
-        document.getElementsByTagName("head")[0].appendChild(meta);
+      // Phones and tablets: the game shows its own joystick and buttons (MobileInput.cs asks the
+      // same media query through SproutFarm.jslib).
+      var isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
+      // On touch screens, START also goes full screen and holds landscape where the browser allows it
+      // (Android Chrome). iPhone Safari supports neither, so the rotate hint covers that case.
+      function enterLandscape() {
+        var page = document.documentElement;
+        if (!isTouchDevice || !page.requestFullscreen) return;
+        page
+          .requestFullscreen()
+          .then(function () {
+            return screen.orientation && screen.orientation.lock
+              ? screen.orientation.lock("landscape")
+              : null;
+          })
+          .catch(function () {});
       }
 
       // The loading screen shows START in place of the progress bar until clicked.
@@ -116,6 +137,7 @@
       loadingBar.style.display = "block";
 
       function startGame() {
+        enterLandscape();
         startButton.remove();
         startHint.remove();
         loadingBar.classList.remove("waiting");

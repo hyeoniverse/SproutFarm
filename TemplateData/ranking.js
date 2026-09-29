@@ -5,6 +5,8 @@
 (function () {
   var POINTS = { animal: 100, berry: 20, clearBonus: 1000, remainingMinute: 2, stamina: 5 };
   var NAME_KEY = "sproutfarm:name";
+  // Phones and tablets type with an on-screen keyboard (same query as index.html)
+  var isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
 
   var overlay, face, title, total, breakdown, list, message, form, input, submitButton, current;
 
@@ -144,6 +146,7 @@
         renderTop(data.top, data.rank);
         setMessage(data.rank + "위에 올랐어! 화면을 닫고 누르면 다시 시작할 수 있어.");
         input.disabled = true;
+        input.blur(); // puts the on-screen keyboard away so the ranking shows
       })
       .catch(function (error) {
         submitButton.disabled = false;
@@ -151,6 +154,21 @@
           ? "조금만 기다렸다가 다시 올려 줘!"
           : "기록을 올리지 못했어. 잠시 뒤에 다시 해 봐!");
       });
+  }
+
+  // The on-screen keyboard covers the bottom of the screen without resizing the page (iOS), so the
+  // overlay is fitted to the part still visible and the name field is scrolled into it.
+  function fitToVisibleArea() {
+    var viewport = window.visualViewport;
+    if (!viewport || overlay.hidden) return;
+    overlay.style.top = viewport.offsetTop + "px";
+    overlay.style.height = viewport.height + "px";
+    overlay.style.bottom = "auto";
+  }
+
+  function showNameField() {
+    fitToVisibleArea();
+    form.scrollIntoView({ block: "nearest" });
   }
 
   function build() {
@@ -187,6 +205,11 @@
     input.maxLength = 10;
     input.placeholder = "이름 (10자까지)";
     input.setAttribute("aria-label", "랭킹에 올릴 이름");
+    input.autocomplete = "nickname";
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("autocorrect", "off");
+    input.spellcheck = false;
+    input.setAttribute("enterkeyhint", "send"); // the keyboard's return key submits the name
     submitButton = el("button", "result-button", "랭킹에 올리기");
     submitButton.type = "submit";
     form.appendChild(input);
@@ -213,6 +236,15 @@
 
     overlay.appendChild(panel);
     document.getElementById("unity-container").appendChild(overlay);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", fitToVisibleArea);
+      window.visualViewport.addEventListener("scroll", fitToVisibleArea);
+    }
+    // The keyboard slides in after focus, so wait for it before scrolling the field into view
+    input.addEventListener("focus", function () {
+      if (isTouchDevice) setTimeout(showNameField, 300);
+    });
   }
 
   window.sproutFarmShowResult = function (result) {
@@ -239,7 +271,10 @@
     setMessage("");
     list.textContent = "";
     overlay.hidden = false;
-    input.focus();
+    fitToVisibleArea();
+    // With a mouse and keyboard the name field is ready to type in. On touch screens the keyboard
+    // would cover the score as soon as it appears, so it waits until the player taps the field.
+    if (!isTouchDevice) input.focus();
     loadTop();
   };
 })();
