@@ -2,6 +2,6 @@
   "private": true,
   "description": "Sprout Farm web deploy: static Unity WebGL build plus the /api leaderboard function.",
   "dependencies": {
-    "redis": "^4.7.1"
+    "@neondatabase/serverless": "^1.2.0"
   }
 }

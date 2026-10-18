@@ -94,7 +94,7 @@ PC(키보드)와 휴대폰·태블릿(화면 조이스틱·버튼) 모두에서 
 | AI | A* Pathfinding Project 4.2.17 (Grid Graph, 부분 재스캔) |
 | UI | uGUI · TextMeshPro |
 | 배포 | WebGL (Brotli 압축) → Vercel 정적 호스팅 |
-| 서버 | Vercel 서버리스 함수 (`api/scores.js`) + Redis |
+| 서버 | Vercel 서버리스 함수 (`api/scores.js`) + Neon Postgres |
 | 웹 | Service Worker (network-first 캐시), 랭킹 UI는 HTML·JS |
 | 계측 | Vercel Web Analytics · Speed Insights |
 
@@ -360,7 +360,7 @@ dayNightCycle.SetOnPath(onPath);
 
 ![결과와 랭킹](docs/screenshot-result.png)
 
-`api/scores.js`(Vercel 서버리스 함수)가 제출된 기록으로 점수를 **다시 계산**해 Redis 정렬 집합에 저장하고 TOP 10을 돌려줍니다.
+`api/scores.js`(Vercel 서버리스 함수)가 제출된 기록으로 점수를 **다시 계산**해 Postgres(Neon) 테이블에 저장하고 TOP 10을 돌려줍니다.
 
 ```js
 // api/scores.js — Unity의 GameResult.Calculate와 같은 공식
@@ -377,7 +377,7 @@ function scoreOf(record) {
 }
 ```
 
-클라이언트가 보내는 것은 **점수가 아니라 잡은 동물 수·먹은 열매 수 같은 기록**이고, 서버가 그 값을 한 판에서 나올 수 있는 범위로 자른 뒤 직접 계산합니다. 이름은 10자까지, 연속 제출은 10초 간격으로 제한합니다. Redis 접속 정보는 저장소에 두지 않고 Vercel 환경 변수로만 넘깁니다.
+클라이언트가 보내는 것은 **점수가 아니라 잡은 동물 수·먹은 열매 수 같은 기록**이고, 서버가 그 값을 한 판에서 나올 수 있는 범위로 자른 뒤 직접 계산합니다. 이름은 10자까지, 연속 제출은 10초 간격으로 제한합니다. DB 접속 정보는 저장소에 두지 않고 Vercel 환경 변수로만 넘깁니다.
 
 ### 7. 웹 배포
 
@@ -537,12 +537,13 @@ python3 -m http.server 8000
    - **Framework Preset**: Other
    - **Build Command / Output Directory**: 비워 둡니다 (저장소 루트를 그대로 올립니다).
 3. 프로젝트 **Settings → Git → Production Branch**를 `WebGL`로 맞춥니다.
-4. 랭킹을 저장할 Redis를 연결합니다.
-   - 프로젝트 **Storage** 탭에서 Redis 데이터베이스를 만들어 이 프로젝트에 연결합니다. 연결할 때 환경 변수 접두어를 `sproutfarm`으로 두면 `sproutfarm_REDIS_URL`이 생깁니다.
-   - 이미 쓰는 Redis가 있다면 **Settings → Environment Variables**에 `REDIS_URL`(`redis://…` 또는 `rediss://…`)로 넣어도 됩니다.
+4. 랭킹을 저장할 Neon Postgres를 연결합니다.
+   - 프로젝트 **Storage** 탭에서 **Neon**(Free 플랜) 데이터베이스를 만들어 이 프로젝트에 연결합니다. 연결할 때 환경 변수 접두어를 `sproutfarm`으로 두면 `sproutfarm_DATABASE_URL`이, 접두어 없이 두면 `DATABASE_URL`이 생깁니다. 테이블은 첫 요청 때 자동으로 만들어집니다.
+   - Neon 무료 플랜은 한동안 요청이 없으면 DB를 재워 두었다가 다음 요청 때 깨우기만 하고, 데이터를 지우지 않습니다. 오래 아무도 안 해도 랭킹이 남습니다.
+   - 이미 쓰는 Postgres가 있다면 **Settings → Environment Variables**에 `DATABASE_URL`(`postgres://…`)로 넣어도 됩니다. (Neon 서버리스 드라이버를 쓰므로 Neon DB여야 합니다.)
 5. 다시 배포합니다(Redeploy). 이제 `WebGL` 브랜치에 push할 때마다 자동으로 배포됩니다.
 
-Redis를 연결하지 않아도 게임은 동작합니다. 결과 화면에 "랭킹 서버가 아직 준비 중이야"가 뜨고 기록만 올릴 수 없습니다.
+DB를 연결하지 않아도 게임은 동작합니다. 결과 화면에 "랭킹 서버가 아직 준비 중이야"가 뜨고 기록만 올릴 수 없습니다.
 
 ## 4. 다른 정적 호스팅에 배포하기
 

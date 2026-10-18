@@ -4,13 +4,13 @@
 //                    -> { rank, score, top }
 // The score is recomputed here from the submitted counts (clamped to what one game
 // can produce), so a client can't simply send a huge total.
-// Storage is the Redis database connected to the project under Storage in the Vercel
-// dashboard, which provides its connection URL as sproutfarm_REDIS_URL.
+// Storage is the Neon Postgres database connected to the project under Storage in the Vercel
+// dashboard, which provides its connection URL as sproutfarm_DATABASE_URL (or DATABASE_URL).
+// Neon's free plan only suspends an idle database and wakes it on the next query, so the
+// leaderboard isn't lost when nobody plays for a while. The tables are created on first use.
 
-const { randomUUID } = require("crypto");
-const { createClient } = require("redis");
+const { neon } = require("@neondatabase/serverless");
 
-const LEADERBOARD_KEY = "sproutfarm:leaderboard";
 const TOP_COUNT = 10;
 const NAME_MAX_LENGTH = 10;
 const SUBMIT_INTERVAL_SECONDS = 10;
@@ -23,27 +23,34 @@ const TOTAL_ANIMALS = 20;
 // and 9:00 to midnight left on the clock. Update these if the game changes.
 const LIMITS = { animals: TOTAL_ANIMALS, berries: 100, remainingMinutes: 15 * 60, stamina: 100, clearSeconds: 60 * 60 };
 
-function redisUrl() {
-  return process.env.sproutfarm_REDIS_URL || process.env.REDIS_URL;
+function databaseUrl() {
+  return process.env.sproutfarm_DATABASE_URL || process.env.DATABASE_URL;
 }
 
-// One connection per function instance, reused across warm invocations.
-let clientPromise = null;
+// Tables are checked once per function instance, reused across warm invocations.
+let readyPromise = null;
 
-function getClient() {
-  if (!clientPromise) {
-    const client = createClient({ url: redisUrl() });
-    client.on("error", (error) => console.error("Redis client error", error));
-    clientPromise = client.connect().then(() => client).catch((error) => {
-      clientPromise = null;
+function getDatabase() {
+  if (!readyPromise) {
+    const sql = neon(databaseUrl());
+    readyPromise = (async () => {
+      await sql`CREATE TABLE IF NOT EXISTS sproutfarm_scores (
+        id bigserial PRIMARY KEY,
+        name text NOT NULL,
+        victory boolean NOT NULL,
+        score integer NOT NULL,
+        clear_seconds integer NOT NULL DEFAULT 0,
+        created_at timestamptz NOT NULL DEFAULT now()
+      )`;
+      await sql`CREATE INDEX IF NOT EXISTS sproutfarm_scores_rank ON sproutfarm_scores (score DESC, id)`;
+      await sql`CREATE TABLE IF NOT EXISTS sproutfarm_submits (ip text PRIMARY KEY, submitted_at timestamptz NOT NULL)`;
+      return sql;
+    })().catch((error) => {
+      readyPromise = null;
       throw error;
     });
   }
-  return clientPromise;
-}
-
-async function redis(client, command) {
-  return client.sendCommand(command.map(String));
+  return readyPromise;
 }
 
 function clampCount(value, max) {
@@ -70,26 +77,27 @@ function cleanName(name) {
     .join("");
 }
 
-async function topEntries(client) {
-  const flat = await redis(client, ["ZREVRANGE", LEADERBOARD_KEY, 0, TOP_COUNT - 1, "WITHSCORES"]);
-  const entries = [];
-  for (let i = 0; i < flat.length; i += 2) {
-    const entry = JSON.parse(flat[i]);
-    entries.push({ rank: i / 2 + 1, name: entry.name, victory: entry.victory, score: Number(flat[i + 1]), clearSeconds: entry.clearSeconds || 0 });
-  }
-  return entries;
+// Ties go to whoever got there first
+async function topEntries(sql) {
+  const rows = await sql`SELECT name, victory, score, clear_seconds FROM sproutfarm_scores ORDER BY score DESC, id LIMIT ${TOP_COUNT}`;
+  return rows.map((row, i) => ({ rank: i + 1, name: row.name, victory: row.victory, score: row.score, clearSeconds: row.clear_seconds }));
 }
 
-async function submit(client, req, res) {
+async function submit(sql, req, res) {
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
   const name = cleanName(body.name);
   if (!name) {
     return res.status(400).json({ error: "name_required" });
   }
 
+  // One submit per IP every SUBMIT_INTERVAL_SECONDS: the upsert only returns a row when the
+  // previous submit is old enough (or there was none)
   const ip = String(req.headers["x-forwarded-for"] || "unknown").split(",")[0].trim();
-  const allowed = await redis(client, ["SET", `sproutfarm:ratelimit:${ip}`, "1", "NX", "EX", SUBMIT_INTERVAL_SECONDS]);
-  if (allowed !== "OK") {
+  const allowed = await sql`INSERT INTO sproutfarm_submits (ip, submitted_at) VALUES (${ip}, now())
+    ON CONFLICT (ip) DO UPDATE SET submitted_at = now()
+    WHERE sproutfarm_submits.submitted_at < now() - make_interval(secs => ${SUBMIT_INTERVAL_SECONDS})
+    RETURNING ip`;
+  if (allowed.length === 0) {
     return res.status(429).json({ error: "too_many_requests" });
   }
 
@@ -104,26 +112,27 @@ async function submit(client, req, res) {
   const score = scoreOf(record);
   // Time taken to clear is shown on the board only; it doesn't affect the score
   const clearSeconds = record.victory ? clampCount(body.clearSeconds, LIMITS.clearSeconds) : 0;
-  const member = JSON.stringify({ id: randomUUID(), name, victory: record.victory, clearSeconds, at: new Date().toISOString() });
 
-  await redis(client, ["ZADD", LEADERBOARD_KEY, score, member]);
-  const rank = (await redis(client, ["ZREVRANK", LEADERBOARD_KEY, member])) + 1;
-  return res.status(200).json({ rank, score, top: await topEntries(client) });
+  const [{ id }] = await sql`INSERT INTO sproutfarm_scores (name, victory, score, clear_seconds)
+    VALUES (${name}, ${record.victory}, ${score}, ${clearSeconds}) RETURNING id`;
+  const [{ ahead }] = await sql`SELECT count(*)::int AS ahead FROM sproutfarm_scores
+    WHERE score > ${score} OR (score = ${score} AND id < ${id})`;
+  return res.status(200).json({ rank: ahead + 1, score, top: await topEntries(sql) });
 }
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
-  if (!redisUrl()) {
+  if (!databaseUrl()) {
     return res.status(503).json({ error: "not_configured" });
   }
 
   try {
-    const client = await getClient();
+    const sql = await getDatabase();
     if (req.method === "GET") {
-      return res.status(200).json({ top: await topEntries(client) });
+      return res.status(200).json({ top: await topEntries(sql) });
     }
     if (req.method === "POST") {
-      return await submit(client, req, res);
+      return await submit(sql, req, res);
     }
     res.setHeader("Allow", "GET, POST");
     return res.status(405).json({ error: "method_not_allowed" });
