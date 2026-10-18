@@ -153,28 +153,27 @@ PC(키보드)와 휴대폰·태블릿(화면 조이스틱·버튼) 모두에서 
 
 ![무한 맵](docs/tech-infinite.png)
 
-배경으로 쓰는 4개의 타일맵(각 20×20칸)이 플레이어를 따라다닙니다. 각 타일맵에는 `Area` 트리거가 달려 있고, 플레이어가 한 덩어리의 경계를 벗어나는 순간 가장 먼 덩어리를 진행 방향 쪽으로 40칸 옮겨 붙입니다.
+바닥 타일맵을 20×20칸 조각으로 나눠 가로·세로 3장씩(3×3) 깔고, 카메라에서 반 판(30칸)보다 멀어진 조각을 반대편 끝으로 60칸(3장 길이) 옮겨 붙입니다. 씬에는 2×2장만 두고, 나머지 5장은 시작할 때 복사해 채웁니다.
 
 ```csharp
-// Reposition.cs — 경계를 벗어난 순간, 가장 먼 타일맵을 진행 방향으로 옮긴다
-private void OnTriggerExit2D(Collider2D collision)
+// Reposition.cs — 카메라에서 30칸보다 멀어진 조각을 60칸 단위로 반대편에 붙인다
+public const float pieceSize = 20f;
+private const float span = pieceSize * 3;           // 3장을 이은 길이: 조각이 옮겨 가는 거리
+public const float coveredView = span - pieceSize;   // 땅이 빈틈없이 덮는 화면 크기 (40칸)
+
+private void LateUpdate()
 {
-    if (!collision.CompareTag("Area")) return;
-
-    Vector3 playerPos = GameManager.instance.player.transform.position;
-    float diffX = Mathf.Abs(playerPos.x - transform.position.x);
-    float diffY = Mathf.Abs(playerPos.y - transform.position.y);
-
-    Vector3 playerDir = GameManager.instance.player.inputVector;
-    float dirX = playerDir.x < 0 ? -1 : 1;
-    float dirY = playerDir.y < 0 ? -1 : 1;
-
-    if (diffX > diffY)      transform.Translate(Vector3.right * dirX * 40); // 가로로 더 멀면 좌우로
-    else if (diffX < diffY) transform.Translate(Vector3.up    * dirY * 40); // 세로로 더 멀면 위아래로
+    Vector3 offset = transform.position - Camera.main.transform.position;
+    float shiftX = Mathf.Round(offset.x / span) * span;
+    float shiftY = Mathf.Round(offset.y / span) * span;
+    if (shiftX != 0f || shiftY != 0f)
+        transform.position -= new Vector3(shiftX, shiftY, 0f);
 }
 ```
 
-플레이어와의 거리(`diffX`·`diffY`)로 **어느 축으로** 옮길지, 입력 방향(`inputVector`)으로 **어느 쪽으로** 옮길지 정합니다. 타일맵 4장만 돌려쓰므로 맵이 아무리 넓어져도 비용이 늘지 않습니다. 대신 맵이 움직여도 플레이어의 좌표는 계속 커지므로, 그 위에 올리는 것들은 모두 **세계 좌표 기준**으로 계산합니다.
+트리거나 입력 방향을 보지 않고 **카메라와의 거리만으로** 옮기므로, 대각선으로 움직이거나 순간이동해도 어긋나지 않습니다. 3×3장이면 카메라 둘레 어느 쪽으로든 20칸 이상 땅이 깔려 있어 화면이 40칸까지 커져도 바탕이 보이지 않고, 그보다 넓은 화면에서는 `CameraViewLimit`이 Pixel Perfect Camera의 배율을 올려 보이는 범위를 40칸 안으로 줄입니다. 꽃·새싹을 다루는 스크립트는 `Reposition.WithCopies`로 복사한 조각까지 함께 다룹니다.
+
+조각 9장만 돌려쓰므로 맵이 아무리 넓어져도 비용이 늘지 않습니다. 대신 맵이 움직여도 플레이어의 좌표는 계속 커지므로, 그 위에 올리는 것들은 모두 **세계 좌표 기준**으로 계산합니다.
 
 ### 2. 절차적 지형 생성 (`WildTerrain`)
 
