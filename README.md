@@ -539,9 +539,15 @@ python3 -m http.server 8000
 3. 프로젝트 **Settings → Git → Production Branch**를 `WebGL`로 맞춥니다.
 4. 랭킹을 저장할 Neon Postgres를 연결합니다.
    - 프로젝트 **Storage** 탭에서 **Neon**(Free 플랜) 데이터베이스를 만들어 이 프로젝트에 연결합니다. 연결할 때 환경 변수 접두어를 `sproutfarm`으로 두면 `sproutfarm_DATABASE_URL`이, 접두어 없이 두면 `DATABASE_URL`이 생깁니다. 테이블은 첫 요청 때 자동으로 만들어집니다.
+   - 만들 때 고르는 옵션은 이렇게 둡니다.
+     - **Realtime**·Auth 같은 부가 기능: 끕니다. 랭킹은 결과 화면에서 한 번씩 불러오면 충분합니다.
+     - **Create database branch for deployment**: 모두 체크 해제합니다. 켜면 배포마다 DB 사본이 생겨 랭킹이 배포별로 갈라집니다.
+     - **Custom Prefix**: 비우거나 `sproutfarm`으로 둡니다. 다른 접두어를 쓰면 `api/scores.js`가 접속 주소를 찾지 못합니다.
+     - **Sensitive**: 켜도 됩니다. 접속 주소가 대시보드에서 가려질 뿐이고, 대신 Development 환경에는 들어가지 않습니다.
    - Neon 무료 플랜은 한동안 요청이 없으면 DB를 재워 두었다가 다음 요청 때 깨우기만 하고, 데이터를 지우지 않습니다. 오래 아무도 안 해도 랭킹이 남습니다.
    - 이미 쓰는 Postgres가 있다면 **Settings → Environment Variables**에 `DATABASE_URL`(`postgres://…`)로 넣어도 됩니다. (Neon 서버리스 드라이버를 쓰므로 Neon DB여야 합니다.)
 5. 다시 배포합니다(Redeploy). 이제 `WebGL` 브랜치에 push할 때마다 자동으로 배포됩니다.
+6. `https://<사이트 주소>/api/scores`를 열어 `{"top":[]}`가 나오면 랭킹이 준비된 것입니다. `not_configured`가 나오면 환경 변수가 없거나 다시 배포하지 않은 것입니다.
 
 DB를 연결하지 않아도 게임은 동작합니다. 결과 화면에 "랭킹 서버가 아직 준비 중이야"가 뜨고 기록만 올릴 수 없습니다.
 
